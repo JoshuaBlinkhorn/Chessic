@@ -11,18 +11,31 @@ def uci_from_user(board) :
             if (uci == move.uci()) :
                 return uci
 
-nodes = []
-            
-def parse_node(node) :
+
+def parse_node(node,player) :
+    nodes = []
+    if (not node.is_end()):
+        if (node.board().turn == player):
+            child = node.variation(0)
+            nodes += [node]
+            nodes += parse_node(child,player)
+        else :
+            for child in node.variations:
+                nodes += parse_node(child,player)
+    return nodes
+
+def weigh_node(node) :
+    size = 0
     if (not node.is_end()):
         if (node.board().turn == chess.WHITE):
-            nodes.append(node)
             child = node.variation(0)
-            parse_node(child)
+            size += weigh_node(child)
         if (node.board().turn == chess.BLACK):
             for child in node.variations:
-                parse_node(child)
-            
+                size += weigh_node(child)
+    return size + 1 
+    
+
 def composer():
     print("N New")
     print("S Saved")
@@ -52,7 +65,8 @@ def composer():
                 print("D done")
                 choice = input(":")
                     
-            
+                
+                
             #game = chess.pgn.Game.from_board(board)
             game = chess.pgn.Game()
             game.setup(board)
@@ -64,14 +78,15 @@ def composer():
             pgn = open(filename)
             repertoire = chess.pgn.read_game(pgn)
             pgn.close()
-            
+
             board = repertoire.board()
             node = repertoire
-
+            player = board.turn
+            
             while (True):
 
                 print(board.unicode(invert_color = True, empty_square = "."))
-                if (board.turn == chess.WHITE):
+                if (board.turn == player):
                     print("Your move(s):")
                 else :
                     print("Your opponents move(s):")
@@ -107,51 +122,64 @@ def composer():
         choice = input(":")
 
 def player():
+
     filename = input("filename:")        
     pgn = open(filename)
     repertoire = chess.pgn.read_game(pgn)
     pgn.close()
 
-    print("N New game")
-    print("D Done")
-    choice = input(":")
+    if(len(repertoire.variations) == 0):
+        print("Repertoire is empty.")
+        return
+    
 
-    while (choice != "D"):
+    node = repertoire
+    board = node.board()
+    player = node.board().turn
+    
+    print(board.unicode(invert_color = True, empty_square = "."))
 
-        if (choice == "N"):
+    while (True):
         
-            board = repertoire.board()
+        if (board.turn == player):
+            
+            print("Your move or [Return] to Quit")
+            uci = uci_from_user(board)
+            if (uci == ""):
+                return
+            move = chess.Move.from_uci(uci)
+            
+            while (not (node.has_variation(move) and node.variation(move).is_main_variation())) :
+                uci = uci_from_user(board)
+                if (uci == ""):
+                    return
+                move = chess.Move.from_uci(uci)
+                
+            node = node.variation(move)
+            board.push(move)
+                
+        else :
+                
+            current_weight = 0
+            index = 0
+                
+            current_weight += weigh_node(node.variation(index))                        
+            while(current_weight < target_weight) :
+                index += 1
+                current_weight += weigh_node(node.variation(index))                        
+                
+            node = node.variation(index)
+            board.push(node.move)
+                
+            print(board.unicode(invert_color = True, empty_square = "."))
+
+        if (node.is_end()):
+            print("End of Line")
+            print("New Game")
             node = repertoire
-        
+            board = node.board()
             print(board.unicode(invert_color = True, empty_square = "."))
             
-            while (not node.is_end()):
-            
-                if (board.turn == chess.WHITE):
-                    
-                    print("Your move")
-                    move = chess.Move.from_uci(uci_from_user(board))
-                    while (not (node.has_variation(move) and node.variation(move).is_main_variation())) :
-                        move = chess.Move.from_uci(uci_from_user(board))
-                        
-                    node = node.variation(move)
-                    board.push(move)
-                        
-                else :
-                        
-                    print("Selecting opponent's move")
-                    num_vars = len(node.variations)
-                    chosen_var = random.randint(0,num_vars - 1)
-                    chosen_move = node.variations[chosen_var].move
-                    node = node.variation(chosen_move)
-                    board.push(chosen_move)
-
-                print(board.unicode(invert_color = True, empty_square = "."))
-                    
-        print("N New game")
-        print("D Done")
-        choice = input(":")
-
 def trainer():
     filename = input("filename:")        
     pgn = open(filename)
@@ -159,8 +187,8 @@ def trainer():
     pgn.close()
 
     print("Generating cards..")
-    del nodes[:]
-    parse_node(repertoire)
+
+    nodes = parse_node(repertoire,repertoire.board().turn)
     size = len(nodes)
 
     if (size == 0):
