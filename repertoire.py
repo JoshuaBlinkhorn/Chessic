@@ -1,6 +1,7 @@
 import chess
 import chess.pgn
 import random
+import time
 
 def print_board(board) :
     print(board.unicode(invert_color = True, empty_square = "."))
@@ -19,6 +20,7 @@ def load_repertoire() :
     pgn = open(file_path)
     repertoire = chess.pgn.read_game(pgn)
     pgn.close()
+    
     print("Loaded repertoire `" + str(file_path) + "'.")
     return [repertoire,file_path]
     
@@ -177,11 +179,134 @@ def composer(repertoire):
                 
     print("Saving repertoire `" + str(file_path) + "'.")
     print(rep, file = open(file_path,"w"), end = "\n\n")
+
+def get_end_nodes(node,player) :
+    
+    rep = node
+    nodes = []
+
+    if (node.is_end()) :
+        if (node.board().turn == player) :
+            node = node.parent()
+        if (node != node.game()) :
+            nodes.append(node)
+
+    else :
+        for child in node.variations:
+            nodes += get_end_nodes(child,player)
+
+    return nodes
+    
+def play_end_node(card,size) :
+
+    node = card[0]
+    index = card[1] 
+    
+    success = True
+    
+    # make main line
+    while (node != node.game()) :
+        move = node.move
+        node = node.parent
+        node.promote_to_main(move)
+
+    board = node.board()
+    player = board.turn
+
+    print("\n--------")    
+    print("NEW GAME: line " + str(index) + " / " + str(size))
+    print("--------\n")        
+    time.sleep(2)
+    
+    print_board(board)
+    uci = input("\n\n:")
+
+    while (True) :
+        
+        if (uci == "") :
+            return ""
+    
+        if (is_valid(uci,board)) :
+            move = chess.Move.from_uci(uci)
+            if (node.has_variation(move) and node.variation(move).is_main_variation()) :
+                node = node.variation(move)
+                board = node.board()
+                if (node.is_end() or node.variation(0).is_end()) :
+                    print("\n-------------")
+                    print("GAME COMPLETE - WELL DONE!")
+                    print("-------------\n")
+                    time.sleep(2)
+                    return "SUCCESS"
+                else :
+                    time.sleep(1)
+                    print("")
+                    print_board(board)
+                    print("\nCORRECT! Making move..")
+                    time.sleep(2)
+
+                    node = node.variation(0)
+                    board = node.board()
+                    print("")
+                    print_board(board)
+                    uci = input("\n\n:")
+                            
+            else :
+                time.sleep(1)
+                print("\nINCORRECT! Correct was '" + str(move.uci()) + "'.\n")
+                node = node.variation(0)
+                move = node.move
+                print_board(node.board())
+                input("\n\n[Enter] to Continue\n")                
+                return "FAILURE"
+
+        else :
+            uci = input("\n\n:")
+            print("")
             
 def player(repertoire):
 
     rep = repertoire[0]
+    player = rep.board().turn
+    queue = []
 
+    # put all nodes in a list
+    end_nodes = get_end_nodes(rep,player)
+    size = len(end_nodes)
+    if (size == 0) :
+        print("No lines in repertoire")
+        return
+
+    while (True) :
+        # create queue
+        for index in range(size) :
+            queue.append([end_nodes[index],index,1])
+        random.shuffle(queue)
+    
+        card = queue.pop(0)
+        node = card[0]
+        index = card[1]
+        weight = card[2]
+
+
+        result = play_end_node(card,size)
+        if (result == "") :
+            return
+        if (result == "SUCCESS") :
+            weight += 1
+        else :
+            weight = 1
+        offset = 2**weight
+        if (offset < size - 1) :
+            queue.insert(offset, [node,index,weight])
+        else :
+            queue.append([node,index,weight])
+    
+"""
+
+    # let fly with game
+    
+    # find all end nodes and order randomly ina queue
+    
     if(len(rep.variations) == 0):
         print("Repertoire is empty.")
         return
@@ -238,6 +363,8 @@ def player(repertoire):
             node = rep
             board = node.board()
             print(board.unicode(invert_color = True, empty_square = "."))
+
+"""
             
 def trainer(repertoire):
 
