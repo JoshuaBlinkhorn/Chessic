@@ -8,5 +8,5 @@
 [FEN "rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
 [SetUp "1"]
 
-2. Nf3 d5 3. Nc3 c5 ( 3... d4 4. Ne2 ) 4. exd5 *
+2. Nf3 d5 3. Nc3 c5 ( 3... d4 4. Ne2 ) ( 3... a6 ) 4. exd5 *
 

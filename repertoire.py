@@ -2,6 +2,87 @@ import chess
 import chess.pgn
 import random
 
+def print_board(board) :
+    print(board.unicode(invert_color = True, empty_square = "."))
+
+def load_repertoire() :
+    
+    # check whether file exists
+
+    # check that it's a repertoire
+
+    # return it (perhaps return it as a chess.pgn.Game? probably all calling functions will use it this way)
+
+    # STUB CODE ONLY: this function still needs to be written
+    
+    file_path = input("filename:")
+    pgn = open(file_path)
+    repertoire = chess.pgn.read_game(pgn)
+    pgn.close()
+    print("Loaded repertoire `" + str(file_path) + "'.")
+    return [repertoire,file_path]
+    
+def new_repertoire() :
+
+    choice = ""
+    board = chess.Board()
+    uci = "string"
+
+    print("Choose starting position.")
+    print(board.unicode(invert_color = True, empty_square = "."))            
+    if (board.turn):
+        print("You play as WHITE")
+    else:
+        print("You play as BLACK")
+    print("Type move or [Enter] to choose")
+
+    uci = input(":")
+    while(uci != ""):
+        
+        if (uci == "B"):
+            # TODO : check board is poppable
+            board.pop()
+
+            print("Choose starting position.")
+            print(board.unicode(invert_color = True, empty_square = "."))            
+            if (board.turn):
+                print("You play as WHITE")
+            else:
+                print("You play as BLACK")
+            print("Type move or [Enter] to choose or B to go Back")
+            # TODO : if board is starting position delete the b option
+            
+        elif (is_valid(uci,board)):
+            board.push(chess.Move.from_uci(uci))
+                
+            print("Choose starting position.")
+            print(board.unicode(invert_color = True, empty_square = "."))            
+            if (board.turn):
+                print("You play as WHITE")
+            else:
+                print("You play as BLACK")
+            print("Type move or [Enter] to choose or B to go Back")
+            # TODO : if board is starting position delete the b option
+
+        uci = input(":")
+    rep = chess.pgn.Game()
+    rep.setup(board)
+    file_path = input("filename:")
+    print(rep, file = open(file_path,"w"), end = "\n\n")
+
+    return [rep, file_path]
+    
+def is_valid(uci,board) :
+
+    validity = False
+    
+    for move in board.legal_moves :
+        if (uci == move.uci()) :
+            validity = True
+            break
+
+    return validity
+    
 def uci_from_user(board) :
     while(True):
         uci = input("move:")
@@ -12,7 +93,7 @@ def uci_from_user(board) :
                 return uci
 
 
-def parse_node(node,player) :
+def parse_node(node, player) :
     nodes = []
     if (not node.is_end()):
         if (node.board().turn == player):
@@ -24,123 +105,95 @@ def parse_node(node,player) :
                 nodes += parse_node(child,player)
     return nodes
 
-def weigh_node(node) :
+def weigh_node(node, player) :
     size = 0
     if (not node.is_end()):
-        if (node.board().turn == chess.WHITE):
+        if (node.board().turn == player):
             child = node.variation(0)
-            size += weigh_node(child)
-        if (node.board().turn == chess.BLACK):
+            size += weigh_node(child, player)
+        else :
             for child in node.variations:
-                size += weigh_node(child)
+                size += weigh_node(child, player)
     return size + 1 
     
+def node_info(node,player) :
+    board = node.board()
+    print_board(board)
+    if (board.turn == player) :
+        print("Your moves:")
+    else :
+        print("Opponents moves:")
+    for var in node.variations :
+        print(var.move.uci())
+    if (board.turn == player) :
+        print ("D to Delete, P to Promote, [Enter] to Go Back")
+    else :
+        print ("D to Delete, [Enter] to Go Back")
+        
+def composer(repertoire):
 
-def composer():
-    print("N New")
-    print("S Saved")
-    print("B Back")
-
-    choice = input(":")        
+    rep = repertoire[0]
+    file_path = repertoire[1]
     
-    while(choice != "B"):
+    node = rep
+    board = node.board()
+    player = board.turn
+    
+    node_info(node,player)
+    uci = input("move:")
+    
+    while (True) :
 
-        if (choice == "N"):
+        if (uci == "") :
+            if (node == rep) :
+                break
+            else :
+                node = node.parent
+                board = node.board()                        
+
+        elif (uci == "D") :
+            uci = input("delete move:")
+            if (is_valid(uci,board)) :
+                move = chess.Move.from_uci(uci)
+                if (node.has_variation(move)) :
+                    node.remove_variation(move)
+
+        elif (uci == "P") :
+            uci = input("promote move:")
+            if (is_valid(uci,board)) :
+                move = chess.Move.from_uci(uci)
+                if (node.has_variation(move)) :
+                    node.promote_to_main(move)
+                                
+        elif (is_valid(uci,board)) :
+            move = chess.Move.from_uci(uci)
+            if (not node.has_variation(move)) :
+                node.add_main_variation(move)
+            node = node.variation(move)
+            board = node.board()                        
+
+        node_info(node,player)
+        uci = input("move:")
+                
+    print("Saving repertoire `" + str(file_path) + "'.")
+    print(rep, file = open(file_path,"w"), end = "\n\n")
             
-            print("Navigate to starting position.")
-            board = chess.Board()
-            print(board.unicode(invert_color = True, empty_square = "."))            
-            print("M add move")
-            print("D done")
-            choice = input(":")
+def player(repertoire):
 
-            while(choice != "D"):
+    rep = repertoire[0]
 
-                if (choice == "M"):
-                    uci = uci_from_user(board)                                
-                    board.push(chess.Move.from_uci(uci))
-                    print(board.unicode(invert_color = True, empty_square = "."))
-
-                print("M add move")
-                print("D done")
-                choice = input(":")
-                    
-                
-                
-            #game = chess.pgn.Game.from_board(board)
-            game = chess.pgn.Game()
-            game.setup(board)
-            filename = input("filename:")
-            print(game, file = open(filename,"w"), end = "\n\n")
-
-        if (choice == "S"):
-            filename = input("filename:")
-            pgn = open(filename)
-            repertoire = chess.pgn.read_game(pgn)
-            pgn.close()
-
-            board = repertoire.board()
-            node = repertoire
-            player = board.turn
-            
-            while (True):
-
-                print(board.unicode(invert_color = True, empty_square = "."))
-                if (board.turn == player):
-                    print("Your move(s):")
-                else :
-                    print("Your opponents move(s):")
-                for var in node.variations :
-                    print(var.move.uci())
-                
-                print("M enter move")
-                print("B go back")
-
-                choice = input(":")
-                
-                if (choice == "M"):
-                    uci = uci_from_user(board)                                
-                    move = chess.Move.from_uci(uci)
-                    if (not node.has_variation(move)) :
-                        node.add_variation(move)
-                    node = node.variation(move)
-                    board.push(move)
-                        
-                if (choice == "B"):
-                    if (node == repertoire):
-                        break;
-                    else :
-                        node = node.parent
-                        board.pop()
-
-            print(repertoire, file = open(filename,"w"), end = "\n\n")
-            
-        print("N New")
-        print("S Saved")
-        print("B Back")
-
-        choice = input(":")
-
-def player():
-
-    filename = input("filename:")        
-    pgn = open(filename)
-    repertoire = chess.pgn.read_game(pgn)
-    pgn.close()
-
-    if(len(repertoire.variations) == 0):
+    if(len(rep.variations) == 0):
         print("Repertoire is empty.")
         return
     
-
-    node = repertoire
+    node = rep
     board = node.board()
     player = node.board().turn
     
     print(board.unicode(invert_color = True, empty_square = "."))
 
     while (True):
-        
+        print("board.turn:" + str(board.turn) + " node.board().turn: " +  str(node.board().turn) + " player: " + str(player))
         if (board.turn == player):
             
             print("Your move or [Return] to Quit")
@@ -159,14 +212,20 @@ def player():
             board.push(move)
                 
         else :
-                
+
+            total_weight = weigh_node(node, player) - 1
+            target_weight = random.randint(0,total_weight - 1)
             current_weight = 0
             index = 0
                 
-            current_weight += weigh_node(node.variation(index))                        
+            current_weight += weigh_node(node.variation(index),player)
+            #print("weight of node.variation(" + str(index) + "): " + str(weigh_node(node.variation(index), player)))
+            #print("total_weight:" + str(total_weight) +" current_weight:" + str(current_weight) + " target_weight:" + str(target_weight) + " index:" + str(index))
+            
             while(current_weight < target_weight) :
                 index += 1
-                current_weight += weigh_node(node.variation(index))                        
+                current_weight += weigh_node(node.variation(index), player)                        
+                #print("total_weight:" + str(total_weight) +" current_weight:" + str(current_weight) + " target_weight:" + str(target_weight) + "index:" + str(index))
                 
             node = node.variation(index)
             board.push(node.move)
@@ -176,25 +235,24 @@ def player():
         if (node.is_end()):
             print("End of Line")
             print("New Game")
-            node = repertoire
+            node = rep
             board = node.board()
             print(board.unicode(invert_color = True, empty_square = "."))
             
-def trainer():
-    filename = input("filename:")        
-    pgn = open(filename)
-    repertoire = chess.pgn.read_game(pgn)
-    pgn.close()
+def trainer(repertoire):
 
+    rep = repertoire[0]
     print("Generating cards..")
 
-    nodes = parse_node(repertoire,repertoire.board().turn)
+    nodes = parse_node(rep,rep.board().turn)
     size = len(nodes)
 
     if (size == 0):
-        print("This repertiore has no card nodes.")
+        print("This repertoire has no card nodes.")
 
     else :
+
+        print("Generated " + str(size) + " cards.")
         
         while(True):
             pos = random.randint(0,size-1)
@@ -221,26 +279,52 @@ def trainer():
             
 def main():
 
-    print("1 Composer")
-    print("2 Player")
-    print("3 Trainer")
+    print("C Create repertoire")
+    print("L Load repertoire")
+    print("M Manage")
+    print("P Play")
+    print("T Train")
     print("Q Quit")
     choice = input(":")
-    
+
+    rep = "NULL"
+
     while(choice != "Q"):
 
-        if (choice == "1"):
-            composer()
-        if (choice == "2"):
-            player()
-        if (choice == "3"):
-            trainer()
+        if (choice == "C"):
+            rep = new_repertoire()
+            choice = "M"
+            
+        if (choice == "L"):
+            rep = load_repertoire()
 
-        print("1 Composer")
-        print("2 Player")
-        print("3 Trainer")
+        
+        if (choice == "M"):
+            if (rep == "NULL"):
+                choice = input(":")
+                continue
+            composer(rep)
+            
+        if (choice == "P"):
+            if (rep == "NULL"):
+                choice = input(":")
+                continue
+            player(rep)
+            
+        if (choice == "T"):
+            if (rep == "NULL"):
+                choice = input(":")
+                continue
+            trainer(rep)
+
+
+        print("C Create repertoire")
+        print("L Load repertoire")
+        print("M Manage")
+        print("P Play")
+        print("T Train")
         print("Q Quit")
         choice = input(":")
-            
+        
 main()
 
