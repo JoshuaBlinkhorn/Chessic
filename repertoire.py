@@ -3,6 +3,8 @@ import chess.pgn
 import random
 import time
 
+# TODO - functions print_node and query_node where the test of node type is done within
+
 def print_board(board) :
     print(board.unicode(invert_color = True, empty_square = "."))
 
@@ -62,7 +64,30 @@ def is_valid(uci,board) :
             break
 
     return validity
+
+def navigate_to_position(root) :
+
+    position = root
+    result = query_position(position)
+
+    print("Navigate to position.")
     
+    while (result != "SAVE") :
+        if (result == "B") :
+            if (position != root) :
+                position = position.parent.parent
+            result = query_position(position)
+            
+        elif (result == "INVALID") :
+            result = query_position(position)
+            
+        else :
+            move = chess.Move.from_uci(result)
+            position = position.variation(move)
+            position = position.variation(0)
+            result = query_position(position)
+    return position
+
 def uci_from_user(board) :
     while(True):
         uci = input("move:")
@@ -72,38 +97,25 @@ def uci_from_user(board) :
             if (uci == move.uci()) :
                 return uci
 
-
-def load_repertoire() :
-    
-    # check whether file exists
-
-    # check that it's a repertoire
-
-    # return it (perhaps return it as a chess.pgn.Game? probably all calling functions will use it this way)
-
-    # STUB CODE ONLY: this function still needs to be written
-    
-    file_path = input("filename:")
+def open_repertoire(file_path) :
     pgn = open(file_path)
     repertoire = chess.pgn.read_game(pgn)
     pgn.close()
-    
+    return repertoire
+            
+def load() :
+    file_path = input("filename:")
+    try:
+        pgn = open(file_path, "r")
+    except:
+        print("File error.")
+        return
+    repertoire = chess.pgn.read_game(pgn)
+    pgn.close()
     print("Loaded repertoire `" + str(file_path) + "'.")
-    return [repertoire,file_path]
+    return file_path
 
-def create_dialogue() :
-
-    # Navigate to position
-    board = chess.Board()
-    position = navigate_to_position()
-    
-    # get repetitions
-    repetitions = input("repetitions: ")
-
-    # call player
-    player(position,repetitions)
-
-
+# TODO: improve this function - the navigation could be delegated
 def new_repertoire() :
     
     choice = ""
@@ -150,11 +162,13 @@ def new_repertoire() :
     rep = chess.pgn.Game()
     rep.setup(board)
     file_path = input("filename:")
-    print(rep, file = open(file_path,"w"), end = "\n\n")
-
-    return [rep, file_path]
-    
-
+    try:
+        print(rep, file = open(file_path,"w"), end = "\n\n")
+    except:
+        print("Error writing file.")
+        return
+        
+    return file_path
 
 def parse_node(node, player) :
     nodes = []
@@ -167,32 +181,6 @@ def parse_node(node, player) :
             for child in node.variations :
                 nodes += parse_node(child,player)
     return nodes
-
-def weigh_node(node, player) :
-    size = 0
-    if (not node.is_end()):
-        if (node.board().turn == player):
-            child = node.variation(0)
-            size += weigh_node(child, player)
-        else :
-            for child in node.variations:
-                size += weigh_node(child, player)
-    return size + 1 
-    
-def node_info(node,player) :
-    board = node.board()
-    print_board(board)
-    if (board.turn == player) :
-        print("Your moves:")
-    else :
-        print("Opponents moves:")
-    for var in node.variations :
-        print(var.move.uci())
-    if (board.turn == player) :
-        print ("D to Delete, P to Promote, [Enter] to Go Back")
-    else :
-        print ("D to Delete, [Enter] to Go Back")
-
 
 def format_node(position) :
 
@@ -207,7 +195,8 @@ def format_node(position) :
                     format_node(pos)
 
 def get_end_nodes(node) :
-    
+
+    format_node(node) # removes candidate leaves    
     nodes = []
 
     if (node.is_end()) :
@@ -218,11 +207,21 @@ def get_end_nodes(node) :
 
     return nodes
     
-        
-def manage(repertoire):
 
-    root = repertoire[0]
-    file_path = repertoire[1]
+def get_training_nodes(node) :
+
+    nodes = []
+
+    if (not node.is_end()) :
+        for child in node.variations :
+            nodes += [child,]
+            nodes += get_training_nodes(child.variation(0))
+
+    return nodes
+
+def manage(file_path):
+
+    root = open_repertoire(file_path)
     
     node = root
     board = node.board()
@@ -263,48 +262,9 @@ def manage(repertoire):
             result = query_candidate(node)
 
     # save
-    format_node(root)
-        
     print("Saving repertoire `" + str(file_path) + "'.")
     print(root, file = open(file_path,"w"), end = "\n\n")
-
         
-"""        
-
-        if (uci == "") :
-            if (node == rep) :
-                break
-            else :
-                node = node.parent
-                board = node.board()                        
-
-        elif (uci == "D") :
-            uci = input("delete move:")
-            if (is_valid(uci,board)) :
-                move = chess.Move.from_uci(uci)
-                if (node.has_variation(move)) :
-                    node.remove_variation(move)
-
-        elif (uci == "P") :
-            uci = input("promote move:")
-            if (is_valid(uci,board)) :
-                move = chess.Move.from_uci(uci)
-                if (node.has_variation(move)) :
-                    node.promote_to_main(move)
-                                
-        elif (is_valid(uci,board)) :
-            move = chess.Move.from_uci(uci)
-            if (not node.has_variation(move)) :
-                node.add_main_variation(move)
-            node = node.variation(move)
-            board = node.board()                        
-
-        node_info(node,player)
-        uci = input("move:")
-
-
-"""
-
 def play_end_node(card,root,deck_size,queue_length) :
 
     node = card[0]
@@ -324,39 +284,40 @@ def play_end_node(card,root,deck_size,queue_length) :
     print("\n--------")    
     print("NEW GAME: line " + str(index) + " / " + str(deck_size) + " " + str(queue_length) + " / " + str(deck_size))
     print("--------\n")        
+    print_board(board)
+
     time.sleep(2)
-    
+
+    print("\nMaking move..")
+    node = node.variation(0)
+    board = node.board()
+    print("")
     print_board(board)
     uci = input("\n\n:")
-
-    while (True) :
+    
+    while (not node.is_end()) :
         
         if (uci == "") :
-            return ""
+            return "QUIT"
     
         if (is_valid(uci,board)) :
             move = chess.Move.from_uci(uci)
             if (node.has_variation(move) and node.variation(move).is_main_variation()) :
                 node = node.variation(move)
                 board = node.board()
-                if (node.is_end() or node.variation(0).is_end()) :
-                    print("\n-------------")
-                    print("GAME COMPLETE - WELL DONE!")
-                    print("-------------\n")
-                    time.sleep(2)
-                    return "SUCCESS"
-                else :
-                    time.sleep(1)
-                    print("")
-                    print_board(board)
-                    print("\nCORRECT! Making move..")
-                    time.sleep(2)
+                if (node.is_end()):
+                    break
+                time.sleep(1)
+                print("")
+                print_board(board)
+                print("\nCORRECT! Making move..", end="")
+                time.sleep(2)
 
-                    node = node.variation(0)
-                    board = node.board()
-                    print("")
-                    print_board(board)
-                    uci = input("\n\n:")
+                node = node.variation(0)
+                board = node.board()
+                print("")
+                print_board(board)
+                uci = input("\n\n:")
                             
             else :
                 time.sleep(1)
@@ -371,127 +332,124 @@ def play_end_node(card,root,deck_size,queue_length) :
             uci = input("\n\n:")
             print("")
 
-def print_moves(node) :
-    if (len(node.variations) == 0) :
-        print("End of line.")
-    else :
-        print("Your moves:")
-        for var in node.variations :
-            print(var.move.uci())
-
-def navigate_to_position(rep) :
-
-    position = rep
-    result = query_position(position)
-
-    while (result != "SAVE") :
-        if (result == "B") :
-            if (position != root) :
-                position = position.parent.parent
-            result = query_position(position)
+    print("\n-------------")
+    print("GAME COMPLETE - WELL DONE!")
+    print("-------------\n")
+    time.sleep(2)
+    return "SUCCESS"
             
-        elif (result == "INVALID") :
-            result = query_position(position)
-            
-        else :
-            move = chess.Move.from_uci(result)
-            position = position.variation(move)
-            position = position.variation(0)
-            result = query_position(position)
-    return position
-            
-def player_dialogue(rep) :
+def play(file_path) :
 
+    root = open_repertoire(file_path)
+    
     # Navigate to position
-    position = navigate_to_position(rep)
+    position = navigate_to_position(root)
     
     # get repetitions
     repetitions = input("repetitions: ")
 
     # call player
-    player(position,repetitions)
+    play_session(position,repetitions)
     
-"""
-    
-    # setup
-    node = rep[0]
-    board = node.board()
-
-    # corner case
-    if (node == node.game()) :
-        print("Repertoire is empty.")
-        return "NULL"
-
-    # get starting position
-    print("Navigate to starting position.")
-    print_board(node.board())
-    print_moves(node)
-    print("type move or [Enter] to Go Back or 'S' to select starting position")
-    uci = input("\n:")
-
-    # navigate
-    while (True) :
-
-        if (uci != "S") :
-            # return
-            repetitions = input("repetitions:")
-            player(node,repetitions)
-
-        if (uci == "") :
-            # go back
-            if (node == node.game()) :
-                return ""
-            else :
-                node = node.parent.parent
-                print("type move or [Enter] to Go Back or 'S' to select starting position")
-            uci = input("\n:")
-
-        if (is_valid(uci,board)) :
-            # check move and apply
-            move = chess.Move.from_uci(uci)
-            if (node.has_variation(move)) :
-                node = node.variation(move)
-                node = node.variation(0)
-                board = node.board()
-                print_board(board)                
-                print("type move or [Enter] to Go Back or 'S' to select starting position")
-            uci = input("\n:")
-"""                
-            
-def player(node,repetitions):
+def play_session(position,repetitions):
 
     # put all nodes in a list
-    end_nodes = get_end_nodes(node)
-    size = len(end_nodes)
+    format_node(position)
+    end_nodes = get_end_nodes(position)
+    deck_size = len(end_nodes)
 
     # create queue
     queue = []
-    for index in range(size) :
+    for index in range(deck_size) :
         queue.append([end_nodes[index],index,0])
     random.shuffle(queue)
     
-    while(len(end_nodes) != 0) :
+    while(len(queue) != 0) :
     
         card = queue.pop(0)
         node = card[0]
         index = card[1]
         iterations = card[2]
 
-        result = play_end_node(card,node,deck_size,len(end_nodes))
-        if (result == "") :
+        result = play_end_node(card,position,deck_size,len(queue))
+        if (result == "QUIT") :
             return
         if (result == "SUCCESS") :
             if (iterations == repetitions) :
                 continue
             else :
                 iterations +=1
-                offset = min(2 ** (iterations + 1), size - 1)
+                offset = min(2 ** (iterations + 1), len(queue) - 1)
                 queue.insert(offset, [node,index,weight])
     
+def train(file_path) :
 
-def trainer(repertoire):
+    root = open_repertoire(file_path)
+    
+    # Navigate to position
+    position = navigate_to_position(root)
+    
+    # get repetitions
+    repetitions = input("repetitions: ")
 
-    rep = repertoire[0]
+    # call trainer
+    train_session(position,repetitions)
+
+def play_training_card(card,deck_size,queue_length) :    
+
+    candidate = card[0]
+    print_board(candidate.board())
+    print("Your move or [Return] to Quit")
+
+    uci = input(":")
+    while (uci != "") :
+        if (is_valid(uci,candidate.board())) :
+            move = chess.Move.from_uci(uci)
+            if (candidate.has_variation(move) and candidate.variation(move).is_main_variation()) :
+                print("Correct")
+                return("Success")
+            else :
+                node = candidate.variation(0)
+                print("Incorrect: correct was " + node.move.uci())
+                print_board(node.board())
+                return("Failure")
+        uci = input(":")
+    return "QUIT"
+        
+def train_session(position,repetitions):
+
+    # put all nodes in a list
+    format_node(position)
+    training_nodes = get_training_nodes(position)
+    deck_size = len(training_nodes)
+
+    # create queue
+    queue = []
+    for index in range(deck_size) :
+        queue.append([training_nodes[index],index,0])
+    random.shuffle(queue)
+    
+    while(len(queue) != 0) :
+    
+        card = queue.pop(0)
+        node = card[0]
+        index = card[1]
+        iterations = card[2]
+
+        result = play_training_card(card,deck_size,len(queue))
+        if (result == "QUIT") :
+            return
+        if (result == "SUCCESS") :
+            if (iterations == repetitions) :
+                continue
+            else :
+                iterations +=1
+                offset = min(2 ** (iterations + 1), len(queue) - 1)
+                queue.insert(offset, [node,index,weight])
+
+                
+def trainer(position,repetitions):
+
     print("Generating cards..")
 
     nodes = parse_node(rep,rep.board().turn)
@@ -525,7 +483,8 @@ def trainer(repertoire):
             print("Correct")                
 
         
-                
+def open_file_msg() :
+    print("Please create or load a repertoire first.")
             
 def main():
 
@@ -537,37 +496,42 @@ def main():
     print("Q Quit")
     choice = input(":")
 
-    rep = "NULL"
+    file_is_open = False
 
     while(choice != "Q"):
 
         if (choice == "C"):
-            rep = new_repertoire()
+            file_path = new_repertoire()
+            file_is_open = True
             choice = "M"
             
-        if (choice == "L"):
-            rep = load_repertoire()
-
+        elif (choice == "L"):
+            file_path = load()
+            file_is_open = True
         
-        if (choice == "M"):
-            if (rep == "NULL"):
+        elif (choice == "M"):
+            if (file_is_open == False):
+                open_file_msg()
                 choice = input(":")
                 continue
-            manage(rep)
-            
-        if (choice == "P"):
-            if (rep == "NULL"):
-                print("Create or Load repertoire first")
-                choice = input(":")
-                continue
-            player_dialogue(rep)
-            
-        if (choice == "T"):
-            if (rep == "NULL"):
-                choice = input(":")
-                continue
-            trainer(rep)
+            else :
+                manage(file_path)
 
+        elif (choice == "P"):
+            if (file_is_open == False):
+                open_file_msg()
+                choice = input(":")
+                continue
+            else :
+                play(file_path)
+            
+        elif (choice == "T"):
+            if (file_is_open == False):
+                open_file_msg()
+                choice = input(":")
+                continue
+            else :
+                train(file_path)
 
         print("C Create repertoire")
         print("L Load repertoire")
@@ -578,4 +542,39 @@ def main():
         choice = input(":")
         
 main()
+
+# REDUNDANT
+
+def weigh_node(node, player) :
+    size = 0
+    if (not node.is_end()):
+        if (node.board().turn == player):
+            child = node.variation(0)
+            size += weigh_node(child, player)
+        else :
+            for child in node.variations:
+                size += weigh_node(child, player)
+    return size + 1 
+    
+def node_info(node,player) :
+    board = node.board()
+    print_board(board)
+    if (board.turn == player) :
+        print("Your moves:")
+    else :
+        print("Opponents moves:")
+    for var in node.variations :
+        print(var.move.uci())
+    if (board.turn == player) :
+        print ("D to Delete, P to Promote, [Enter] to Go Back")
+    else :
+        print ("D to Delete, [Enter] to Go Back")
+
+def print_moves(node) :
+    if (len(node.variations) == 0) :
+        print("End of line.")
+    else :
+        print("Your moves:")
+        for var in node.variations :
+            print(var.move.uci())
 
