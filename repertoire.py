@@ -1,7 +1,33 @@
+import os
 import chess
 import chess.pgn
 import random
 import time
+import pickle
+import datetime
+import shutil
+import rep
+
+failure_string = " "
+data_path = "Repertoires/"
+
+# name statuses
+
+def represents_int(string):
+    try: 
+        int(string)
+        return True
+    except ValueError:
+        return False
+
+def folder_path(name) :
+    return data_path + name + "/"
+
+def rpt_path(name) :
+    return folder_path(name) + name + ".rpt"
+
+def pgn_path(name) :
+    return folder_path(name) + name + ".pgn"
 
 ########
 # misc #
@@ -53,11 +79,9 @@ def print_moves(node) :
                 print(candidate.move.uci())
 
 # returns the parsed repertoire from its file path
-def open_repertoire(file_path) :
-    pgn = open(file_path)
-    repertoire = chess.pgn.read_game(pgn)
-    pgn.close()
-    return repertoire
+def get_pgn_game(repertoire) :
+    game = chess.pgn.read_game(repertoire.pgn)
+    return game
 
 # returns the user's colour for a repertoire
 def get_player(repertoire) :
@@ -69,34 +93,42 @@ def get_player(repertoire) :
 
 # creates a new repertoire
 def new() :
-    # navigate to starting position
+    
+    # get starting position
     result = get_starting_position()
     if (result == "QUIT") :
         return    
     board = result
+    game = chess.pgn.Game()
+    game.setup(board)
+        
+    # get colour
     clear()
     print_board(board)
-    # obtain colour
-    
-    colour = input("\nYou play as:\n'W' for White\n'B' for  Black\n:")
+    colour = input("\nYou play as:\n'W' for White\n'B' for  Black\n\n:")
     while (colour != "B" and colour != "W"):
-        if (colour = "Q") :
+        if (colour == "Q") :
             return        
         colour = input(":")
         
-    # create pgn
-    repertoire = chess.pgn.Game()
-    repertoire.setup(board)
-    repertoire.headers["Event"] = colour
-    file_path = input("filename:")
-    try:
-        print(repertoire, file = open(file_path,"w"), end = "\n\n")
-    except:
-        print("Error writing file.")
-        return
+    # get name and build folder
+    name = input("\nName:")
+    while (os.path.exists(data_path + name)) :
+        name = input("That name is taken.\nChoose another:")
+        
+    # make the folder
+    os.mkdir(folder_path(name))
+    # build and save the retertoire
+    repertoire = rep.Repertoire(name, colour)
+    with open(rpt_path(name), "wb") as file :
+        pickle.dump(repertoire, file)
+    # build and save the pgn
+    print(game, file = open(pgn_path(name), "w"), end = "\n\n")
 
-    return file_path
-
+    clear()
+    print("Repertoire '" + name + "' created.")
+        
+    
 # prompts user to choose starting position
 def get_starting_position() :
     board = chess.Board()
@@ -147,11 +179,16 @@ def load() :
 ############
 
 # user management of repertoire as a pgn
-def manage(file_path):
+def manage(name):
 
-    repertoire = open_repertoire(file_path)
+    with open(pgn_path(name), "r", encoding = "utf-8-sig") as pgn:
+        game = chess.pgn.read_game(pgn)
     
-    node = repertoire
+    #pgn = open(pgn_path(name), "r" encoding = "utf-8-sig")
+    #game = chess.pgn.read_game(pgn)
+    #pgn.close()
+    
+    node = game
     board = node.board()
     player = board.turn
 
@@ -159,9 +196,9 @@ def manage(file_path):
     
     while (result != "SAVE") :
         if (result == "BACK") :
-            if (node != repertoire) :
+            if (node != game) :
                 node = node.parent
-
+                
         elif (result == "DELETE") :
             uci = input("delete move:")
             if (is_valid(uci,node.board())) :
@@ -182,11 +219,12 @@ def manage(file_path):
                 node.add_main_variation(move)
             node = node.variation(move)
             board = node.board()                        
-            result = query_node(node)
 
-    # save
-    print("Saving repertoire `" + str(file_path) + "'.")
-    print(repertoire, file = open(file_path,"w"), end = "\n\n")
+        result = query_node(node)
+
+    # save repertoire
+    print("Saving repertoire `" + str(name) + "'.")
+    print(game, file = open(pgn_path(name), "w"), end = "\n\n")
 
 # prompts user for input                
 def get_input(node) :
@@ -285,7 +323,7 @@ def play_line(line) :
     start = line[0]
     end = line[1]
     player = line[2]
-
+    
     # make main line
     node = end
     while (node != start) :
@@ -293,7 +331,6 @@ def play_line(line) :
         node = node.parent
         node.promote_to_main(move)
     board = node.board()
-    player = board.turn
 
     # play line
     while (node != end) :
@@ -309,7 +346,7 @@ def play_line(line) :
             while (uci != "") :
                 if (uci == "Q") :
                     return "QUIT"
-                if (uci == "F") :
+                if (uci == failure_string) :
                     return "FAILURE"
                 clear()
                 print_board(node.board())
@@ -347,12 +384,13 @@ def get_end_nodes(node,player) :
 def train(file_path) :
     repertoire = open_repertoire(file_path)
     node = navigate_to_node(repertoire)
-    queue = get_training_nodes(node,get_payer(repertoire))
-    if (lend(queue) == 0) :
+    queue = get_training_nodes(node,get_player(repertoire))
+    if (len(queue) == 0) :
         print("No training positions generated.")
         return
     random.shuffle(queue)
-
+    train_session(queue)
+    
 # generates cards and trains them until the deck is complete
 def train_session(queue):
 
@@ -387,7 +425,7 @@ def train_card(card) :
     while (uci != "") :
         if (uci == "Q") :
             return "QUIT"
-        if (uci == "F") :
+        if (uci == failure_string) :
             return "FAILURE"
         uci = input(":")
 
@@ -410,61 +448,110 @@ def get_training_nodes(node,player) :
 # main() #
 ##########
 
-def main():
-    clear()
-    print("N New repertoire")
-    print("L Load repertoire")
-    print("M Manage")
-    print("P Play")
-    print("T Train")
-    print("Q Quit")
-    choice = input("\n:")
 
-    file_is_open = False
+# displays the overview of the given repertoire `name'
 
-    while(choice != "Q"):
+def print_repertoire_overview(repertoire) :
+    # setup
+    deck_width = 14
+    info_width = 11
+    status_descriptors = ["insufficient for training","training available","up to date"]    
+    lines = repertoire.lines
+    positions = repertoire.positions
 
-        if (choice == "N"):
-            file_path = new()
-            file_is_open = True
-            choice = "M"
-            
-        elif (choice == "L"):
-            file_path = load()
-            file_is_open = True
+    # pretty printing
+    print("Repertoire: " + repertoire.name)
+    print("Status    : " + status_descriptors[repertoire.status()])
+    header = "\n" + "".ljust(deck_width) + "new".ljust(info_width)
+    header += ("learning".ljust(info_width) + "due".ljust(info_width))
+    print(header)
+    info = "Lines".ljust(deck_width) + str(len(lines.new)).ljust(info_width)
+    info += str(len(lines.learning)).ljust(info_width)
+    info += str(len(lines.due_pile())).ljust(info_width)
+    print(info)
+    info = "Positions".ljust(deck_width) + str(len(positions.new)).ljust(info_width)
+    info += str(len(positions.learning)).ljust(info_width)
+    info += str(len(positions.due_pile())).ljust(info_width)
+    print(info)
+
+def print_repertoire_options(repertoire) :
+    status = repertoire.status()
+    print("\n'm' manage")
+    if (status == rep.SCHEDULED) :
+        print("'t' train")
+    print("'c' close")
+    
+def repertoire_menu(name) :
+    with open(rpt_path(name), "rb") as file :
+        repertoire = pickle.load(file)
+    command = ""
+    while(command != "c") :
+        clear()
+        print_repertoire_overview(repertoire)
+        print_repertoire_options(repertoire)
+        command = input("\n:")
+        if (command == "m") :
+            manage(name)
+        elif (command == "t") :
+            True
+            #train(name)
+
+def print_overview(names) :
+
+    id_width = 3
+    name_width = 20
+    info_width = 12
+
+    if (len(names) == 0) :
+        print("You currently have no repertoires.")
+        return
         
-        elif (choice == "M"):
-            if (file_is_open == False):
-                open_file_msg()
-                choice = input(":")
-                continue
-            else :
-                manage(file_path)
-
-        elif (choice == "P"):
-            if (file_is_open == False):
-                open_file_msg()
-                choice = input(":")
-                continue
-            else :
-                play(file_path)
+    print("ID".ljust(id_width) + "NAME".ljust(name_width) + "LINES".ljust(info_width) + "POSITIONS".ljust(info_width))
+    
+    # print the stats for each repertoire
+    for index, name in enumerate(names) :
+        with open(rpt_path(name), "rb") as file :
+            repertoire = pickle.load(file)
+        line = str(index + 1).ljust(id_width) + repertoire.name.ljust(name_width)
+        for deck in [repertoire.lines,repertoire.positions] :
+            line += f"{len(deck.new)} {len(deck.learning)} {len(deck.due_pile())}".ljust(info_width)
+        print(line)
             
-        elif (choice == "T"):
-            if (file_is_open == False):
-                open_file_msg()
-                choice = input(":")
-                continue
-            else :
-                train(file_path)
-
-        print("\nC Create repertoire")
-        print("L Load repertoire")
-        print("M Manage")
-        print("P Play")
-        print("T Train")
-        print("Q Quit")
-        choice = input("\n:")
-
+def print_options(names) :
+    print ("")
+    if (len(names) != 0) :
+        print("[ID] select")
+    print("'n' new")
+    if (len(names) != 0) :
+        print("'d' delete")
+    print("'q' quit")
+            
+def main():
+    command = ""
+    while(command != "q") :
+        names = os.listdir(data_path)    
+        clear()
+        print_overview(names)
+        print_options(names)
+        command = (input("\n:"))
+        
+        if (represents_int(command) and 1 <= int(command) <= len(names)) :
+            index = int(command) - 1
+            repertoire_menu(names[index])
+        elif (command == "n") :
+            new()
+        elif (len(names) != 0 and command == "d") :
+            clear()
+            print_overview(names)
+            print_options(names)
+            command = input("\nID to delete:")
+            if (represents_int(command) and 1 <= int(command) <= len(names)) :
+                index = int(command) - 1
+                print (f"you are about to permanently delete `{names[index]}'.")
+                check = input("are you sure:")
+                if (check == "y") :
+                    shutil.rmtree(folder_path(names[index]))
+        
 def open_file_msg() :
     print("Please create or load a repertoire first.")
             
@@ -474,142 +561,6 @@ def open_file_msg() :
 
 main()
 
-# REDUNDANT
 
-def weigh_node(node, player) :
-    size = 0
-    if (not node.is_end()):
-        if (node.board().turn == player):
-            child = node.variation(0)
-            size += weigh_node(child, player)
-        else :
-            for child in node.variations:
-                size += weigh_node(child, player)
-    return size + 1 
-    
-def node_info(node,player) :
-    board = node.board()
-    print_board(board)
-    if (board.turn == player) :
-        print("Your moves:")
-    else :
-        print("Opponents moves:")
-    for var in node.variations :
-        print(var.move.uci())
-    if (board.turn == player) :
-        print ("D to Delete, P to Promote, [Enter] to Go Back")
-    else :
-        print ("D to Delete, [Enter] to Go Back")
+# temp copied code
 
-def print_moves(node) :
-    if (len(node.variations) == 0) :
-        print("End of line.")
-    else :
-        print("Your moves:")
-        for var in node.variations :
-            print(var.move.uci())
-
-def trainer(position,repetitions):
-
-    print("Generating cards..")
-
-    nodes = parse_node(rep,rep.board().turn)
-    size = len(nodes)
-
-    if (size == 0):
-        print("This repertoire has no card nodes.")
-
-    else :
-
-        print("Generated " + str(size) + " cards.")
-        
-        while(True):
-            pos = random.randint(0,size-1)
-            chosen_node = nodes[pos]
-            print(chosen_node.board().unicode(invert_color = True, empty_square = "."))
-            
-            print("Your move or [Return] to Quit")
-            uci = uci_from_user(chosen_node.board())
-            if (uci == ""):
-                return
-            move = chess.Move.from_uci(uci)
-
-            while (not (chosen_node.has_variation(move) and chosen_node.variation(move).is_main_variation())) :
-                uci = uci_from_user(chosen_node.board())
-                if (uci == ""):
-                    return
-                move = chess.Move.from_uci(uci)
-                
-            print(chosen_node.variation(move).board().unicode(invert_color = True, empty_square = "."))
-            print("Correct")                
-
-def print_position(position) :
-    print_board(position.board())
-    if (position.is_end()) :
-        print("No candidates.")
-    else :
-        print("Candidate moves:")
-        for candidate in position.variations :
-            print(candidate.move.uci())
-
-            
-def query_position(position) :    
-    print_position(position)
-    uci = input(":")
-    if (uci == "B") :
-        return "BACK"
-    if (uci == "D") :
-        return "DELETE"
-    if (uci == "P") :
-        return "PROMOTE"
-    if (uci == "") :
-        return "SAVE"
-    if (is_valid(uci,position.board())) :
-        return uci
-    return "INVALID"
-    
-def print_candidate(candidate) :
-    print_board(candidate.board())
-    if (candidate.is_end()) :
-        print("No responses.")
-    else :
-        print("Responses:")
-        for response in candidate.variations :
-            print(response.move.uci())
-            
-def query_candidate(candidate) :    
-    print_candidate(candidate)
-    uci = input(":")
-    if (uci == "B") :
-        return "BACK"
-    if (uci == "D") :
-        return "DELETE"
-    if (uci == "") :
-        return "SAVE"
-    if (is_valid(uci,candidate.board())) :
-        return uci
-    return "INVALID"
-            
-def parse_node(node, player) :
-    nodes = []
-    if (not node.is_end()):
-        if (node.board().turn == player):
-            child = node.variation(0)
-            nodes += [node]
-            nodes += parse_node(child,player)
-        else :
-            for child in node.variations :
-                nodes += parse_node(child,player)
-    return nodes
-
-def format_node(position) :
-
-    print("formatting position")
-    if (not position.is_end()) :
-        for candidate in position.variations :
-            if (candidate.is_end()) :                
-                candidate.parent.remove_variation(candidate.move)
-                print("removing candidate leaf.")
-            else :
-                for pos in candidate.variations :
-                    format_node(pos)
