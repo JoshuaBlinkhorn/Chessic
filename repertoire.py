@@ -8,10 +8,12 @@ import datetime
 import shutil
 import rep
 
+########
+# misc #
+########
+
 failure_string = " "
 data_path = "Repertoires/"
-
-# name statuses
 
 def represents_int(string):
     try: 
@@ -20,6 +22,8 @@ def represents_int(string):
     except ValueError:
         return False
 
+# filename `macros'
+    
 def folder_path(name) :
     return data_path + name + "/"
 
@@ -29,9 +33,33 @@ def rpt_path(name) :
 def pgn_path(name) :
     return folder_path(name) + name + ".pgn"
 
-########
-# misc #
-########
+# node maintenence
+
+def is_candidate(node,root) :
+    return (node.board().turn == node.game().board().turn and node != root)
+
+def is_response(node,root) :
+    return (node.board().turn != node.game().board().turn and node != root)
+
+def is_final(response) :
+    if (is_end(response)) :
+        return True
+    for candidate in response.variations :
+        if (not candidate.is_end()) :
+            return False
+    return True
+
+# returns the set of responses deeper than the given node
+def get_responses(node,root) :
+    responses = []
+    if (is_response(node,root)) :
+        responses.append(node)
+    if (not is_end(node)) :
+        for child in node.variations :
+            responses += get_responses(child,root)
+    return responses
+
+    
 
 # `clears' the screen
 def clear() :
@@ -178,54 +206,145 @@ def load() :
 # manage() #
 ############
 
+
+def print_node_overview(node) :
+
+    print_turn(node.board())
+    print_board(node.board())
+    print_moves(node)
+
+def print_node_options(node) :
+    print("")
+    if (node != node.game()) :
+        print("'b' back")
+    if (len(node.variations) != 0) :
+        print("'d' delete")
+    if (len(node.variations) > 1) :
+        print("'p' promote")
+    print ("'c' close")
+    print ("<move> enter move")
+
+
+def add_move(node,move,board,root,repertoire) :  
+
+    # create the variation node
+    node.add_variation(move)
+
+    # handle cards:
+    if (is_candidate(node,root)) :
+
+        # we have a new position - build board and card
+        new_board = chess.Board()
+        for history_move in board.move_stack :
+            new_board.push(history_move)
+        new_board.push(move)
+        new_card = rep.Card(new_board)
+
+        # add card to both decks, in the correct pile
+        if (node.variation(move).is_main_variation()) :
+            repertoire.lines.inactive.append(new_card)
+            repertoire.positions.inactive.append(new_card)
+        else:
+            repertoire.lines.unreachable.append(new_card)
+            repertoire.positions.unreachable.append(new_card)
+            
+        if (is_response(node.parent,root)) :
+            # we have a superceded line - build board
+            new_board = chess.Board()
+            for history_move in board.move_stack :
+                new_board.push(history_move)
+            new_board.pop()
+
+            # remove superceded line
+            for pile in repertoire.lines.piles() :
+                for index, card in enumerate(pile) :
+                    if (card.board == new_board) :
+                        pile.pop(index)
+
+# TODO: bug somewhere here
+
+def is_stack_prefix(boardA, boardB) :
+    stackA = boardA.move_stack
+    stackB = boardB.move_stack
+    if (len(stackA) > len(stackB)) :
+        return False
+    if (stackB[1:len(stackA)] == stackA[1:len(stackA)]) :
+        return True
+    return False
+
+def delete_move(node, move, board, root, repertoire) :
+
+    board.push(move)
+    for pile in repertoire.lines.piles() :
+        for card_index, card in enumerate(pile) :
+            if (is_stack_prefix(board, card.board)) :
+                pile.pop(card_index)
+
+    for pile in repertoire.positions.piles() :
+        for card_index, card in enumerate(pile) :
+            if (is_stack_prefix(board, card.board)) :
+                pile.pop(card_index)
+
+    board.pop()
+    node.remove_variation(move)
+
+def promote_move(node) :
+
+    True
+    
 # user management of repertoire as a pgn
 def manage(name):
 
-    with open(pgn_path(name), "r", encoding = "utf-8-sig") as pgn:
-        game = chess.pgn.read_game(pgn)
-    
-    #pgn = open(pgn_path(name), "r" encoding = "utf-8-sig")
-    #game = chess.pgn.read_game(pgn)
-    #pgn.close()
-    
-    node = game
-    board = node.board()
-    player = board.turn
+    with open(pgn_path(name), "r", encoding = "utf-8-sig") as pgn :
+        root = chess.pgn.read_game(pgn)
+    with open(rpt_path(name), "rb") as file :
+        repertoire = pickle.load(file)
 
-    result = query_node(node)
-    
-    while (result != "SAVE") :
-        if (result == "BACK") :
-            if (node != game) :
-                node = node.parent
-                
-        elif (result == "DELETE") :
-            uci = input("delete move:")
-            if (is_valid(uci,node.board())) :
-                move = chess.Move.from_uci(uci)
+    board = root.board()
+    node = root
+        
+    command = ""
+    while(command != "c") :
+        clear()
+        print_node_overview(node)
+        print_node_options(node)
+        command = input("\n:")
+        if (command == "b" and node != root) :
+            node = node.parent
+            board.pop()
+        elif (command == "d" and len(node.variations) != 0) :
+            command = input("delete move:")
+            if (is_valid(command,board)) :
+                move = chess.Move.from_uci(command)
                 if (node.has_variation(move)) :
-                    node.remove_variation(move)
+                    print(f"You are about to permanently delete the move '{command}' and all of its variations and associated data.")
+                    command = input("are you sure:")
+                    if (command == "y") :
+                        delete_move(node, move, board, root, repertoire)
 
-        elif (result == "PROMOTE") :
-            uci = input("promote move:")
-            if (is_valid(uci,node.board())) :
-                move = chess.Move.from_uci(uci)
+        elif (command == "p" and len(node.variations) > 1) :
+            command = input("promote move:")
+            if (is_valid(command,board)) :
+                move = chess.Move.from_uci(command)
                 if (node.has_variation(move)) :
-                    node.promote_to_main(move)
-                           
-        elif (result != "INVALID") :
-            move = chess.Move.from_uci(result)
+                    promote_move(node.variation(move))
+
+        elif (is_valid(command,board)) :
+            move = chess.Move.from_uci(command)
             if (not node.has_variation(move)) :
-                node.add_main_variation(move)
+                add_move(node,move,board,root,repertoire)
             node = node.variation(move)
-            board = node.board()                        
-
-        result = query_node(node)
-
+            board.push(move)
+            
     # save repertoire
     print("Saving repertoire `" + str(name) + "'.")
-    print(game, file = open(pgn_path(name), "w"), end = "\n\n")
+    with open(rpt_path(name), "wb") as file :
+        pickle.dump(repertoire, file)
+    print(root, file = open(pgn_path(name), "w"), end = "\n\n")
 
+def delete_card(board,deck) :
+    card = deck.get_card(board)
+    
 # prompts user for input                
 def get_input(node) :
     uci = input(":")
@@ -464,14 +583,19 @@ def print_repertoire_overview(repertoire) :
     print("Status    : " + status_descriptors[repertoire.status()])
     header = "\n" + "".ljust(deck_width) + "new".ljust(info_width)
     header += ("learning".ljust(info_width) + "due".ljust(info_width))
+    header += ("inactive".ljust(info_width) + "unreachable".ljust(info_width))
     print(header)
     info = "Lines".ljust(deck_width) + str(len(lines.new)).ljust(info_width)
     info += str(len(lines.learning)).ljust(info_width)
     info += str(len(lines.due_pile())).ljust(info_width)
+    info += str(len(lines.inactive)).ljust(info_width)
+    info += str(len(lines.unreachable)).ljust(info_width)
     print(info)
     info = "Positions".ljust(deck_width) + str(len(positions.new)).ljust(info_width)
     info += str(len(positions.learning)).ljust(info_width)
     info += str(len(positions.due_pile())).ljust(info_width)
+    info += str(len(positions.inactive)).ljust(info_width)
+    info += str(len(positions.unreachable)).ljust(info_width)
     print(info)
 
 def print_repertoire_options(repertoire) :
@@ -482,10 +606,10 @@ def print_repertoire_options(repertoire) :
     print("'c' close")
     
 def repertoire_menu(name) :
-    with open(rpt_path(name), "rb") as file :
-        repertoire = pickle.load(file)
     command = ""
     while(command != "c") :
+        with open(rpt_path(name), "rb") as file :
+            repertoire = pickle.load(file)
         clear()
         print_repertoire_overview(repertoire)
         print_repertoire_options(repertoire)
@@ -564,3 +688,38 @@ main()
 
 # temp copied code
 
+"""        
+    node = game
+    board = node.board()
+    player = board.turn
+
+    result = query_node(node)
+    
+    while (result != "SAVE") :
+        if (result == "BACK") :
+            if (node != game) :
+                node = node.parent
+                
+        elif (result == "DELETE") :
+            uci = input("delete move:")
+            if (is_valid(uci,node.board())) :
+                move = chess.Move.from_uci(uci)
+                if (node.has_variation(move)) :
+                    node.remove_variation(move)
+
+        elif (result == "PROMOTE") :
+            uci = input("promote move:")
+            if (is_valid(uci,node.board())) :
+                move = chess.Move.from_uci(uci)
+                if (node.has_variation(move)) :
+                    node.promote_to_main(move)
+                           
+        elif (result != "INVALID") :
+            move = chess.Move.from_uci(result)
+            if (not node.has_variation(move)) :
+                node.add_main_variation(move)
+            node = node.variation(move)
+            board = node.board()                        
+
+        result = query_node(node)
+"""

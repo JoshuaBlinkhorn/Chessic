@@ -7,21 +7,23 @@ CLEARED = 1
 READY = 2
 
 class Card :
-    def __init__(self) :
-        self.content = False
+    def __init__(self,board) :
+        self.board = board
         self.last_date = False
         self.due_date = False
         
 class Deck :
+
     def __init__(self) :
         self.new = []
         self.learning = []
         self.reviewing = []
         self.inactive = []
         self.unreachable = []
+        self.new_daily = 10
 
     def piles(self) :
-        return (self.new, self.learning, self.reviewing, self.inactive, self.unreachable)
+        return [self.new, self.learning, self.reviewing, self.inactive, self.unreachable]
 
     def due_pile(self) :
         cards = []
@@ -40,7 +42,14 @@ class Deck :
         else :
             return READY
 
+    def get_card(self,board) :
+        for pile in self.piles() :
+            for index, card in enumerate(pile) :
+                if (card.board == board) :
+                    return pile.pop(index)
+        return False
 
+        
 # repertoire statuses
 
 INSUFFICIENT = 0
@@ -57,7 +66,7 @@ class Repertoire :
     def status(self) :
         if (self.lines.status() == EMPTY and self.positions.status() == EMPTY) :
             return INSUFFICIENT
-        if (lines.status() == READY or positions.status() == rREADY) :
+        if (self.lines.status() == READY or self.positions.status() == READY) :
             return SCHEDULED
         else :
             return UNSCHEDULED
