@@ -1,10 +1,45 @@
 # rep.py -- the backend module for the repertoire.py script
 
-# deck statuses
+# statuses
 
+import datetime
+import time
+
+# core statuses (every card is in one of these states)
+
+NEW = 0
+FIRST_STEP = 1
+SECOND_STEP = 2
+REVIEW = 3
+INACTIVE = 4
+
+class TrainingData :
+    def __init__(self) :
+        self.status = INACTIVE
+        self.last_date = datetime.date.today()
+        self.due_date = datetime.date.today()
+        
+class LeafData:
+    def __init__(self) :
+        self.status = False
+        self.last_date = False
+        self.due_date = False
+
+class  MetaData:
+    def __init__(self, name, player) :
+        self.name = name
+        self.player = player
+        self.learning_data = [datetime.date.today(),0]
+        self.learn_max = 10
+        self.status = EMPTY
+
+# repertoire statuses
+        
 EMPTY = 0
 CLEARED = 1
-READY = 2
+WANTING = 2
+
+"""
 
 class Card :
     def __init__(self,board) :
@@ -70,3 +105,5 @@ class Repertoire :
             return SCHEDULED
         else :
             return UNSCHEDULED
+
+"""
