@@ -105,7 +105,6 @@ def open_repertoire (filename) :
     return repertoire
 
 def update(repertoire) :
-    print(f"Updating.")
     learning_date = repertoire.meta.learning_data[0]
     learning_value = repertoire.meta.learning_data[1]
     max_value = repertoire.meta.learn_max
@@ -213,7 +212,6 @@ def print_main_overview(filenames) :
     for index, filename in enumerate(filenames) :
        repertoire = open_repertoire(filename)
        counts = get_scheduled_counts(repertoire)
-       print(f"counts {counts}")
        info = str(index + 1).ljust(id_width)
        info += str(repertoire.meta.name).ljust(name_width)
        for index in range(3) :
@@ -418,22 +416,21 @@ def promote_move(node,board) :
 def add_move(node,move) :
     new_node = node.add_variation(move)
     new_node.player_to_move = not node.player_to_move
-    if (new_node.player_to_move) :
-        new_node.training = False
-    elif (node.parent != None) :
+    if (node.parent == None or new_node.player_to_move) :
+        new_node.training = False        
+    else :
         new_node.training = rep.TrainingData()
 
 # sets the card statuses based on the current environment
         
 def normalise(node,threshold) :
-    print(f"normalising, threshold: {threshold}")
-    if (threshold <= 0) :
-        if (node.training) :
+    # configure training data
+    if (node.training) :
+        if (threshold <= 0) :
             for status in [rep.NEW,rep.FIRST_STEP,rep.SECOND_STEP] :
-                if (node.training.status == status ) :
+                if (node.training.status == status) :
                     node.training.status = rep.INACTIVE
-    else : # threshold exceeds 0
-        if (node.training) :
+        else : # threshold exceeds 0
             if (node.training.status == rep.INACTIVE) :
                 node.training.status = rep.NEW
             for status in [rep.NEW,rep.FIRST_STEP,rep.SECOND_STEP] :
@@ -441,11 +438,11 @@ def normalise(node,threshold) :
                     threshold -= 1
 
     if (not node.is_end()) :
-        if (node.training) : # call all children recursively
+        if (node.player_to_move) : # call all children recursively
+            threshold = normalise(node.variations[0],threshold)
+        else : # call only the main variation
             for child in node.variations :
                 threshold = normalise(child,threshold)
-        else : # call only the main variation
-            threshold = normalise(node.variations[0],threshold)
                 
     return threshold
 
@@ -465,8 +462,9 @@ def train(filename):
 
     command = ""
     while(len(queue) != 0) :
+        counts = get_counts(repertoire)
         card = queue.pop(0)
-        result = play_card(card)
+        result = play_card(card,counts)
         if (result == "CLOSE") :
             queue.insert(0,card)
             save_repertoire(repertoire)
@@ -475,36 +473,47 @@ def train(filename):
 
     save_repertoire(repertoire)
 
-def play_card(card) :
+def play_card(card,counts) :
     root = card[0]
     node = card[1]
     status = node.training.status
 
+    # front of card
     front = root.variations[0]
-    print(f"status: {status}")
+    clear()
+    print(f"{counts[0]} {counts[1]} {counts[2]} {counts[5]}")
     if (status == 0) :
-        print("New : this is a position you haven't seen before")
+        print("\nNew : this is a position you haven't seen before")
     if (status == 1 or status == 2) :
-        print("Learning : this is a position you're currently learning")
+        print("\nLearning : this is a position you're currently learning")
     if (status == 3) :
-        print("Review : this is a position you've learned, due for recall")
+        print("\nReview : this is a position you've learned, due for recall")
 
     print_turn(front.board())
     print_board(front.board())
+    if (status == 0) :
+        print("\nGuess the move..")
+    else :
+        print("\nRecall the move..")
+    print(".. then hit [enter] or 'c' to close")
     uci = input("\n:")
     if (uci == "c") :
         return "CLOSE"
+
+    # back of card
     back = front.variations[0]
     clear()    
-
-    if (status != 0) :
-        print("\n[enter]  ok")
-        print("'e'      easy")
-        print("'h'      hard")
-        
+    print("Solution:")
     print_board(back.board())
-    uci = input("\n:")
-    while (True) :
+
+    if (status == 0) :
+        print("\nHit [enter] to continue.")
+        input("\n:")
+    if (status != 0) :
+        print("\n'e' easy    [enter] ok    'h' hard")
+        uci = input("\n:")
+   
+    while (uci !='c') :
         if (uci == "e") :
             return "EASY"
         if (uci == "h") :
@@ -513,6 +522,9 @@ def play_card(card) :
             return "OK"
         uci = input(":")
 
+    return "CLOSE"
+        
+        
 def handle_card_result(result,card,queue) :
     root = card[0]
     node = card[1]
@@ -524,43 +536,43 @@ def handle_card_result(result,card,queue) :
     if (status == rep.NEW) :
         print("Here")
         node.training.status = rep.FIRST_STEP
-        offset = min(2,len(queue) - 1)
+        offset = min(2,len(queue))
         queue.insert(offset,card)
                     
-    if (status == rep.FIRST_STEP) :
+    elif (status == rep.FIRST_STEP) :
         if (result == "EASY") :
             node.training.status = rep.REVIEW
             node.training.last_date = today
             node.training.due_date = tomorrow
-        if (result == "OK") :
+        elif (result == "OK") :
             node.training.status = rep.SECOND_STEP
-            offset = min(7,len(queue) - 1)
+            offset = min(7,len(queue))
             queue.insert(offset,card)
-        if (result == "HARD") :
+        elif (result == "HARD") :
             node.training.status = rep.FIRST_STEP            
-            offset = min(2,len(queue) - 1)
+            offset = min(2,len(queue))
             queue.insert(offset,card)
 
-    if (status == rep.SECOND_STEP) :
+    elif (status == rep.SECOND_STEP) :
         if (result == "EASY") :
             node.training.status = rep.REVIEW
             node.training.last_date = today
             node.training.due_date = today + datetime.timedelta(days=3)
-        if (result == "OK") :
+        elif (result == "OK") :
             node.training.status = rep.REVIEW
             node.training.last_date = today
             node.training.due_date = tomorrow
-        if (result == "HARD") :
+        elif (result == "HARD") :
             node.training.status = rep.FIRST_STEP            
-            offset = min(2,len(queue) - 1)
+            offset = min(2,len(queue))
             queue.insert(offset,card)
             
-    if (status == rep.NEW) :
+    elif (status == rep.REVIEW) :
         previous_gap = (node.training.due_date - node.training.last_date).days
 
         if (result == "HARD") :
             node.training.status = rep.FIRST_STEP
-            offset = min(2,len(queue) - 1)
+            offset = min(2,len(queue))
             queue.insert(offset,card)
 
         else :
