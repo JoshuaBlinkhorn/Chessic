@@ -50,10 +50,19 @@ def print_turn(board) :
         print("BLACK to play.")
 
 # pretty prints the board
-def print_board(board) :
+def print_board(board,player) :
+    string = board.unicode(invert_color = True, empty_square = ".")
     print("")
-    print(board.unicode(invert_color = True, empty_square = "."))
-
+    if (player) :
+        print(string)
+    else :
+        for row in range(8) :
+            row_string = ""        
+            for column in range(15) :
+                row_string += string[(7-row) * 16 + (14 - column)]
+            print(row_string)            
+            
+        
 # prints repertoire moves for the given node
 def print_moves(node) :
     if (node.player_to_move) :
@@ -237,7 +246,7 @@ def new_repertoire() :
     # get user choices
     board = get_starting_position()
     clear()
-    print_board(board)
+    print_board(board,True)
     colour = input("\nYou play as:\n'w' for White\n'b' for  Black\n\n:")
     while (colour != "b" and colour != "w"):
         colour = input(":")
@@ -263,7 +272,7 @@ def get_starting_position() :
     while(True) :
         clear()
         print("\nChoose starting position.")
-        print_board(board)
+        print_board(board,True)
         uci = input(":")
 
         if (uci == "Q") :
@@ -276,7 +285,7 @@ def get_starting_position() :
         elif (is_valid_uci(uci,board)) :
             board.push(chess.Move.from_uci(uci))
             print("Choose starting position.")
-            print_board(board)
+            print_board(board,True)
         elif (uci == "") :
             return board
 
@@ -382,7 +391,7 @@ def compute_learning_threshold(repertoire) :
 """
 def print_node_overview(node,player,board) :
     print_turn(board)
-    print_board(board)
+    print_board(board,player)
     print_moves(node)
 
 def print_node_options(node) :
@@ -462,9 +471,8 @@ def train(filename):
 
     command = ""
     while(len(queue) != 0) :
-        counts = get_counts(repertoire)
         card = queue.pop(0)
-        result = play_card(card,counts)
+        result = play_card(card,repertoire)
         if (result == "CLOSE") :
             queue.insert(0,card)
             save_repertoire(repertoire)
@@ -473,10 +481,12 @@ def train(filename):
 
     save_repertoire(repertoire)
 
-def play_card(card,counts) :
+def play_card(card,repertoire) :
     root = card[0]
     node = card[1]
     status = node.training.status
+    counts = get_counts(repertoire)
+    player = repertoire.meta.player
 
     # front of card
     front = root.variations[0]
@@ -489,8 +499,8 @@ def play_card(card,counts) :
     if (status == 3) :
         print("\nReview : this is a position you've learned, due for recall")
 
-    print_turn(front.board())
-    print_board(front.board())
+    print_turn(front.board(),player)
+    print_board(front.board(),player)
     if (status == 0) :
         print("\nGuess the move..")
     else :
@@ -504,7 +514,7 @@ def play_card(card,counts) :
     back = front.variations[0]
     clear()    
     print("Solution:")
-    print_board(back.board())
+    print_board(back.board(),player)
 
     if (status == 0) :
         print("\nHit [enter] to continue.")
@@ -702,13 +712,6 @@ def load() :
     print("Loaded repertoire `" + str(file_path) + "'.")
     return file_path
 
-
-# prompts user for input at the given node
-def query_node(node):
-    print_turn(node.board())
-    print_board(node.board())
-    print_moves(node)
-    return get_input(node)
 
 # returns the parsed repertoire from its file path
 def get_pgn_game(repertoire) :
