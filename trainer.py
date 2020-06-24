@@ -469,7 +469,7 @@ def train(filename):
             queue.insert(0,card)
             save_repertoire(repertoire)
             return
-        handle_card_result(result,card,queue)
+        handle_card_result(result,card,queue,repertoire)
 
     save_repertoire(repertoire)
 
@@ -508,9 +508,9 @@ def play_card(card,counts) :
 
     if (status == 0) :
         print("\nHit [enter] to continue.")
-        input("\n:")
+        input("\n\n:")
     if (status != 0) :
-        print("\n'e' easy    [enter] ok    'h' hard")
+        print("\n'e' easy    [enter] ok    'h' hard\n")
         uci = input("\n:")
    
     while (uci !='c') :
@@ -525,7 +525,7 @@ def play_card(card,counts) :
     return "CLOSE"
         
         
-def handle_card_result(result,card,queue) :
+def handle_card_result(result,card,queue,repertoire) :
     root = card[0]
     node = card[1]
     status = node.training.status
@@ -544,6 +544,7 @@ def handle_card_result(result,card,queue) :
             node.training.status = rep.REVIEW
             node.training.last_date = today
             node.training.due_date = tomorrow
+            repertoire.meta.learning_data[1] += 1
         elif (result == "OK") :
             node.training.status = rep.SECOND_STEP
             offset = min(7,len(queue))
@@ -558,10 +559,12 @@ def handle_card_result(result,card,queue) :
             node.training.status = rep.REVIEW
             node.training.last_date = today
             node.training.due_date = today + datetime.timedelta(days=3)
+            repertoire.meta.learning_data[1] += 1
         elif (result == "OK") :
             node.training.status = rep.REVIEW
             node.training.last_date = today
             node.training.due_date = tomorrow
+            repertoire.meta.learning_data[1] += 1
         elif (result == "HARD") :
             node.training.status = rep.FIRST_STEP            
             offset = min(2,len(queue))
@@ -574,6 +577,7 @@ def handle_card_result(result,card,queue) :
             node.training.status = rep.FIRST_STEP
             offset = min(2,len(queue))
             queue.insert(offset,card)
+            repertoire.meta.learning_data[1] -= 1
 
         else :
             if (result == "EASY") :
