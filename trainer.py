@@ -499,7 +499,6 @@ def play_card(card,repertoire) :
     if (status == 3) :
         print("\nReview : this is a position you've learned, due for recall")
 
-    print_turn(front.board(),player)
     print_board(front.board(),player)
     if (status == 0) :
         print("\nGuess the move..")
@@ -606,7 +605,8 @@ def generate_training_queue(node,board) :
     if (node.training) :
         status = node.training.status
         due_date = node.training.due_date
-        if (status == 0 or status == 1 or status == 2 or status == 5) :
+        today = datetime.date.today()
+        if (status == 0 or status == 1 or status == 2 or (status == 3 and due_date <= today)) :
                 # add a card to the queue
             solution = board.pop()
             problem = board.pop()
