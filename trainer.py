@@ -472,32 +472,31 @@ def train(filename):
     command = ""
     while(len(queue) != 0) :
         card = queue.pop(0)
+        counts = get_counts(repertoire)
+        clear()
+        print(f"{counts[0]} {counts[1]} {counts[2]} {counts[5]}")
         result = play_card(card,repertoire)
         if (result == "CLOSE") :
-            queue.insert(0,card)
-            save_repertoire(repertoire)
-            return
+            break
         handle_card_result(result,card,queue,repertoire)
 
+    # save and quit trainer
     save_repertoire(repertoire)
 
 def play_card(card,repertoire) :
     root = card[0]
     node = card[1]
     status = node.training.status
-    counts = get_counts(repertoire)
     player = repertoire.meta.player
 
     # front of card
     front = root.variations[0]
-    clear()
-    print(f"{counts[0]} {counts[1]} {counts[2]} {counts[5]}")
     if (status == 0) :
-        print("\nNew : this is a position you haven't seen before")
+        print("\nNEW : this is a position you haven't seen before")
     if (status == 1 or status == 2) :
-        print("\nLearning : this is a position you're currently learning")
+        print("\nLEARNING : this is a position you're currently learning")
     if (status == 3) :
-        print("\nReview : this is a position you've learned, due for recall")
+        print("\nRECALL : this is a position you've learned, due for recall")
 
     print_board(front.board(),player)
     if (status == 0) :
@@ -519,19 +518,19 @@ def play_card(card,repertoire) :
         print("\nHit [enter] to continue.")
         input("\n\n:")
     if (status != 0) :
-        print("\n'e' easy    [enter] ok    'h' hard\n")
+        print("\n'h' hard    [enter] ok    'e' easy\n")
         uci = input("\n:")
    
-    while (uci !='c') :
+    while (True) :
         if (uci == "e") :
             return "EASY"
         if (uci == "h") :
             return "HARD"
         if (uci == "") :
             return "OK"
+        if (uci == "c") :
+            return "CLOSE"
         uci = input(":")
-
-    return "CLOSE"
         
         
 def handle_card_result(result,card,queue,repertoire) :
@@ -545,7 +544,8 @@ def handle_card_result(result,card,queue,repertoire) :
     if (status == rep.NEW) :
         print("Here")
         node.training.status = rep.FIRST_STEP
-        offset = min(2,len(queue))
+        increase = int(round(3 * random.random()))
+        offset = min(1 + increase,len(queue))
         queue.insert(offset,card)
                     
     elif (status == rep.FIRST_STEP) :
@@ -556,11 +556,13 @@ def handle_card_result(result,card,queue,repertoire) :
             repertoire.meta.learning_data[1] += 1
         elif (result == "OK") :
             node.training.status = rep.SECOND_STEP
-            offset = min(7,len(queue))
+            increase = int(round(3 * random.random()))
+            offset = min(6 + increase,len(queue))
             queue.insert(offset,card)
         elif (result == "HARD") :
             node.training.status = rep.FIRST_STEP            
-            offset = min(2,len(queue))
+            increase = int(round(3 * random.random()))
+            offset = min(1 + increase,len(queue))
             queue.insert(offset,card)
 
     elif (status == rep.SECOND_STEP) :
@@ -576,7 +578,8 @@ def handle_card_result(result,card,queue,repertoire) :
             repertoire.meta.learning_data[1] += 1
         elif (result == "HARD") :
             node.training.status = rep.FIRST_STEP            
-            offset = min(2,len(queue))
+            increase = int(round(3 * random.random()))
+            offset = min(1 + increase,len(queue))
             queue.insert(offset,card)
             
     elif (status == rep.REVIEW) :
