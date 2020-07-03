@@ -245,9 +245,11 @@ def new_repertoire() :
     
     # get user choices
     board = get_starting_position()
+    if (board == "CLOSE") :
+        return
     clear()
     print_board(board,True)
-    colour = input("\nYou play as:\n'w' for White\n'b' for  Black\n\n:")
+    colour = input("\nYou play as:\n'w' for White\n'b' for Black\n\n:")
     while (colour != "b" and colour != "w"):
         colour = input(":")
     player = colour == "w"
@@ -273,19 +275,20 @@ def get_starting_position() :
         clear()
         print("\nChoose starting position.")
         print_board(board,True)
-        uci = input(":")
+        print("\nEnter a move or hit [Enter] to select this position.")
+        print("'b' to go back one move")
+        print("'c' to close.")
+        uci = input("\n:")
 
-        if (uci == "Q") :
-            return "QUIT"
-        elif (uci == "B") :
+        if (uci == "c") :
+            return "CLOSE"
+        elif (uci == "b") :
             try:
                 board.pop()
             except IndexError:
                 print("Cannot go back from root position.")
         elif (is_valid_uci(uci,board)) :
             board.push(chess.Move.from_uci(uci))
-            print("Choose starting position.")
-            print_board(board,True)
         elif (uci == "") :
             return board
 
