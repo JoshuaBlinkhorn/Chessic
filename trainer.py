@@ -203,29 +203,42 @@ def main_menu():
 
 def print_main_overview(filenames) :
 
-    id_width = 3
     name_width = 20
-    info_width = 12
 
     if (len(filenames) == 0) :
         print("You currently have no repertoires.")
         return
 
     # print header
-    header = "ID".ljust(id_width) + "NAME".ljust(name_width)
-    header += "NEW".ljust(info_width) + "LEARNING".ljust(info_width)
-    header += "DUE".ljust(info_width)
+    header = "ID".ljust(3) + "COV.".ljust(5) + "NAME".ljust(name_width)
+    header += "WAITING".ljust(9) + "LEARNED".ljust(9)
+    header += "UNSEEN".ljust(8) + "TOTAL".ljust(6)
     print(header)
+
+    
     
     # print the stats for each repertoire
     for index, filename in enumerate(filenames) :
-       repertoire = open_repertoire(filename)
-       counts = get_scheduled_counts(repertoire)
-       info = str(index + 1).ljust(id_width)
-       info += str(repertoire.meta.name).ljust(name_width)
-       for index in range(3) :
-           info += str(counts[index]).ljust(info_width)
-       print(info)
+        repertoire = open_repertoire(filename)
+        counts = get_counts(repertoire)
+        id = index + 1
+        if (counts[6] != 0) :
+            coverage = int(round(counts[3] / counts[6] * 100))
+        waiting = counts[0] + counts[1] + counts[2] + counts[5]
+        learned = counts[3]
+        unseen = counts[4]
+        total = counts[6]
+        info = str(id).ljust(3)
+        if (counts[6] != 0) :
+            info += (str(coverage) + "% ").rjust(5)
+        else :
+            info += "".ljust(5)
+        info += str(repertoire.meta.name).ljust(name_width)
+        info += str(waiting).ljust(9)
+        info += str(learned).ljust(9)
+        info += str(unseen).ljust(8)
+        info += str(total).ljust(7)
+        print(info)
 
 def print_main_options(filenames) :
     print ("")
