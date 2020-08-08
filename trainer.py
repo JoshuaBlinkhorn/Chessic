@@ -7,7 +7,7 @@ import pickle
 import datetime
 import time
 import shutil
-#import rep
+import rep
 
 ########
 # misc #
@@ -212,7 +212,7 @@ def print_main_overview(filenames) :
     # print header
     header = "ID".ljust(3) + "COV.".ljust(5) + "NAME".ljust(name_width)
     header += "WAITING".ljust(9) + "LEARNED".ljust(9)
-    header += "UNSEEN".ljust(8) + "TOTAL".ljust(6)
+    header += "TOTAL".ljust(6)
     print(header)
 
     
@@ -236,7 +236,6 @@ def print_main_overview(filenames) :
         info += str(repertoire.meta.name).ljust(name_width)
         info += str(waiting).ljust(9)
         info += str(learned).ljust(9)
-        info += str(unseen).ljust(8)
         info += str(total).ljust(7)
         print(info)
 
