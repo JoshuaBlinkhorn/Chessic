@@ -7,7 +7,26 @@ import pickle
 import datetime
 import time
 import shutil
-import rep
+
+NEW = 0
+FIRST_STEP = 1
+SECOND_STEP = 2
+REVIEW = 3
+INACTIVE = 4
+
+class TrainingData :
+    def __init__(self) :
+        self.status = INACTIVE
+        self.last_date = datetime.date.today()
+        self.due_date = datetime.date.today()
+        
+class  MetaData:
+    def __init__(self, name, player) :
+        self.name = name
+        self.player = player
+        self.learning_data = [datetime.date.today(),0]
+        self.learn_max = 10
+        self.status = EMPTY
 
 ########
 # misc #
@@ -147,7 +166,7 @@ def get_counts(node) :
             if (status == index) :
                 counts[index] += 1
         # due count
-        if (status == rep.REVIEW and due_date <= datetime.date.today()) :
+        if (status == REVIEW and due_date <= datetime.date.today()) :
             counts[5] += 1
         # increment reachable count
         counts[6] += 1
@@ -272,7 +291,7 @@ def new_repertoire() :
     # create the repertoire
     rpt = chess.pgn.Game()
     rpt.setup(board)
-    rpt.meta = rep.MetaData(name, player)
+    rpt.meta = MetaData(name, player)
     rpt.training = False
     rpt.player_to_move = player == board.turn
     save_repertoire(rpt)
@@ -443,7 +462,7 @@ def add_move(node,move) :
     if (node.parent == None or new_node.player_to_move) :
         new_node.training = False        
     else :
-        new_node.training = rep.TrainingData()
+        new_node.training = TrainingData()
 
 # sets the card statuses based on the current environment
         
@@ -451,13 +470,13 @@ def normalise(node,threshold) :
     # configure training data
     if (node.training) :
         if (threshold <= 0) :
-            for status in [rep.NEW,rep.FIRST_STEP,rep.SECOND_STEP] :
+            for status in [NEW,FIRST_STEP,SECOND_STEP] :
                 if (node.training.status == status) :
-                    node.training.status = rep.INACTIVE
+                    node.training.status = INACTIVE
         else : # threshold exceeds 0
-            if (node.training.status == rep.INACTIVE) :
-                node.training.status = rep.NEW
-            for status in [rep.NEW,rep.FIRST_STEP,rep.SECOND_STEP] :
+            if (node.training.status == INACTIVE) :
+                node.training.status = NEW
+            for status in [NEW,FIRST_STEP,SECOND_STEP] :
                 if (node.training.status == status) :
                     threshold -= 1
 
@@ -556,52 +575,52 @@ def handle_card_result(result,card,queue,repertoire) :
     today = datetime.date.today()
     tomorrow = today + datetime.timedelta(days=1)
     
-    if (status == rep.NEW) :
+    if (status == NEW) :
         print("Here")
-        node.training.status = rep.FIRST_STEP
+        node.training.status = FIRST_STEP
         increase = int(round(3 * random.random()))
         offset = min(1 + increase,len(queue))
         queue.insert(offset,card)
                     
-    elif (status == rep.FIRST_STEP) :
+    elif (status == FIRST_STEP) :
         if (result == "EASY") :
-            node.training.status = rep.REVIEW
+            node.training.status = REVIEW
             node.training.last_date = today
             node.training.due_date = tomorrow
             repertoire.meta.learning_data[1] += 1
         elif (result == "OK") :
-            node.training.status = rep.SECOND_STEP
+            node.training.status = SECOND_STEP
             increase = int(round(3 * random.random()))
             offset = min(6 + increase,len(queue))
             queue.insert(offset,card)
         elif (result == "HARD") :
-            node.training.status = rep.FIRST_STEP            
+            node.training.status = FIRST_STEP            
             increase = int(round(3 * random.random()))
             offset = min(1 + increase,len(queue))
             queue.insert(offset,card)
 
-    elif (status == rep.SECOND_STEP) :
+    elif (status == SECOND_STEP) :
         if (result == "EASY") :
-            node.training.status = rep.REVIEW
+            node.training.status = REVIEW
             node.training.last_date = today
             node.training.due_date = today + datetime.timedelta(days=3)
             repertoire.meta.learning_data[1] += 1
         elif (result == "OK") :
-            node.training.status = rep.REVIEW
+            node.training.status = REVIEW
             node.training.last_date = today
             node.training.due_date = tomorrow
             repertoire.meta.learning_data[1] += 1
         elif (result == "HARD") :
-            node.training.status = rep.FIRST_STEP            
+            node.training.status = FIRST_STEP            
             increase = int(round(3 * random.random()))
             offset = min(1 + increase,len(queue))
             queue.insert(offset,card)
             
-    elif (status == rep.REVIEW) :
+    elif (status == REVIEW) :
         previous_gap = (node.training.due_date - node.training.last_date).days
 
         if (result == "HARD") :
-            node.training.status = rep.FIRST_STEP
+            node.training.status = FIRST_STEP
             offset = min(2,len(queue))
             queue.insert(offset,card)
             repertoire.meta.learning_data[1] -= 1
@@ -612,7 +631,7 @@ def handle_card_result(result,card,queue,repertoire) :
             else :
                 multiplier = 2 + random.random()
             new_gap = int(round(previous_gap * multiplier))
-            node.training.status = rep.REVIEW
+            node.training.status = REVIEW
             node.training.last_date = today
             node.training.due_date = today + datetime.timedelta(days=new_gap)
 
@@ -768,15 +787,15 @@ def get_full_counts(node) :
     counts = [0,0,0,0,0]
     if (node.training) :
         status = node.training.status
-        if (status == rep.NEW) :
+        if (status == NEW) :
             counts[0] += 1
-        elif (status == rep.FIRST_STEP) :
+        elif (status == FIRST_STEP) :
             counts[1] += 1
-        elif (status == rep.SECOND_STEP) :
+        elif (status == SECOND_STEP) :
             counts[2] += 1
-        elif (status == rep.REVIEW) :
+        elif (status == REVIEW) :
             counts[3] += 1
-        elif (status == rep.INACTIVE) :
+        elif (status == INACTIVE) :
             counts[4] += 1
 
     for child in node.variations :
