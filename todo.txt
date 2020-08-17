@@ -1,10 +1,12 @@
 opening lines to add:
 
-1) the Qg5 (or is it Qd5) line in the fork variation
+1) the `new line' in the Max Lange
 
 2) the two knights with 4.d3
 
 3) the active reply to the Petroff
+
+4) the Grunfeld, video by video
 
 development:
 
