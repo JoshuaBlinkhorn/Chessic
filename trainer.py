@@ -26,8 +26,7 @@ class  MetaData:
         self.player = player
         self.learning_data = [datetime.date.today(),0]
         self.learn_max = 10
-        self.status = EMPTY
-
+        
 ########
 # misc #
 ########
@@ -370,7 +369,6 @@ def print_repertoire_overview(repertoire,counts) :
     print("Total".ljust(tag_width) + str(total))
 
 def print_repertoire_options(repertoire,counts) :
-    status = repertoire.meta.status
     print("\n'm' manage")
     if (counts[0] + counts[1] + counts[2] + counts[5] > 0) :
         print("\n't' train")
