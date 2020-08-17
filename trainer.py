@@ -108,25 +108,25 @@ def rpt_path(name) :
 def rpt_name(filename) :
     return filename[:-4]
 
-def delete_repertoire(filenames) :
+def delete_variation(colour, opening, variations) :
     # TODO: the prompting should go in the calling function
     command = input("\nID to delete:")
-    if (represents_int(command) and 1 <= int(command) <= len(filenames)) :
+    if (represents_int(command) and 1 <= int(command) <= len(variations)) :
         index = int(command) - 1
-        print (f"you are about to permanently delete `{filenames[index]}'.")
+        variation = variations[index]
+        print (f"you are about to permanently delete `{variation}'.")
         check = input("are you sure:")
         if (check == "y") :
-            os.remove(rep_path + "/" + filenames[index])
+            variation_path = "Repertoires/" + colour + "/" + opening + "/" + variation
+            os.remove(variation_path)
 
-def save_repertoire (repertoire) :
-    filename = rpt_path(repertoire.meta.name)
+def save_repertoire (variation_path, repertoire) :
     update(repertoire)
-    with open(filename, "wb") as file :
+    with open(variation_path, "wb") as file :
         pickle.dump(repertoire,file)
 
-def open_repertoire (filename) :
-    filepath = rep_path + "/" + filename
-    with open(filepath, "rb") as file :
+def open_repertoire (variation_path) :
+    with open(variation_path, "rb") as file :
         repertoire = pickle.load(file)
     update(repertoire)
     return repertoire
@@ -195,8 +195,6 @@ def get_total_count(node) :
         for child in node.variations :
             count += get_total_count(child)                    
     return count
-
-
         
 #############
 # main menu #
@@ -205,144 +203,242 @@ def get_total_count(node) :
 def main_menu():
     command = ""
     while(command != "q") :
-        filenames = os.listdir(rep_path)    
+        white_openings = os.listdir("Repertoires/White")
+        black_openings = os.listdir("Repertoires/Black")
+        filenames = os.listdir(rep_path)
         clear()
-        print_main_overview(filenames)
-        print_main_options(filenames)
+        print_main_overview()
+        print_main_options()
         command = (input("\n:"))
         
-        if (represents_int(command) and 1 <= int(command) <= len(filenames)) :
-            index = int(command) - 1
-            repertoire_menu(filenames[index])
-        elif (command == "n") :
-            new_repertoire()
-        elif (command == "d" and len(filenames) != 0) :
-            delete_repertoire(filenames)
+        if (command == "w") :
+            colour_menu("White")
+        elif (command == "b") :
+            colour_menu("Black")
 
-def print_main_overview(filenames) :
-
-    name_width = 20
-
-    if (len(filenames) == 0) :
-        print("You currently have no repertoires.")
-        return
+def print_main_overview() :
 
     # print header
-    header = "ID".ljust(3) + "COV.".ljust(5) + "NAME".ljust(name_width)
+    header = "COV.".ljust(5) + "COLOUR".ljust(10)
     header += "WAITING".ljust(9) + "LEARNED".ljust(9)
     header += "TOTAL".ljust(6)
     print(header)
-
     
-    
-    # print the stats for each repertoire
-    for index, filename in enumerate(filenames) :
-        repertoire = open_repertoire(filename)
-        counts = get_counts(repertoire)
-        id = index + 1
-        if (counts[6] != 0) :
-            coverage = int(round(counts[3] / counts[6] * 100))
-        waiting = counts[0] + counts[1] + counts[2] + counts[5]
-        learned = counts[3]
-        unseen = counts[4]
-        total = counts[6]
-        info = str(id).ljust(3)
-        if (counts[6] != 0) :
-            info += (str(coverage) + "% ").rjust(5)
+    # print the stats for each colour
+    for colour in ["White","Black"] :
+        waiting = learned = total = 0
+        colour_path = "Repertoires/" + colour
+        for opening in os.listdir(colour_path) :
+            opening_path = colour_path + "/" + opening
+            for filename in os.listdir(opening_path) :
+                repertoire_path = opening_path + "/" + filename
+                repertoire = open_repertoire(repertoire_path)
+                counts = get_counts(repertoire)
+                waiting += counts[0] + counts[1] + counts[2] + counts[5]
+                learned += counts[3]
+                total += counts[6]
+        if (total != 0) :
+            coverage = int(round(learned / total * 100))
+            info = (str(coverage) + "% ").rjust(5)
         else :
-            info += "".ljust(5)
-        info += str(repertoire.meta.name).ljust(name_width)
+            info = "".ljust(5)
+        info += colour.ljust(10)
         info += str(waiting).ljust(9)
         info += str(learned).ljust(9)
         info += str(total).ljust(7)
         print(info)
 
-def print_main_options(filenames) :
+def print_main_options() :
     print ("")
-    if (len(filenames) != 0) :
-        print("[ID] select")
-    print("'n' new")
-    if (len(filenames) != 0) :
-        print("'d' delete")
+    print("'w' white")
+    print("'b' black")
     print("'q' quit")
 
-############
-# new menu #
-############
+###############
+# colour menu #
+###############
 
-# creates a new repertoire
-def new_repertoire() :
-    
-    # get user choices
-    board = get_starting_position()
-    if (board == "CLOSE") :
-        return
-    clear()
-    print_board(board,True)
-    colour = input("\nYou play as:\n'w' for White\n'b' for Black\n\n:")
-    while (colour != "b" and colour != "w"):
-        colour = input(":")
-    player = colour == "w"
-    name = input("\nName:")
-    while (os.path.exists(rpt_path(name))) :
-        name = input("That name is taken.\nChoose another:")
+def colour_menu(colour):
 
-    # create the repertoire
-    rpt = chess.pgn.Game()
-    rpt.setup(board)
-    rpt.meta = MetaData(name, player)
-    rpt.training = False
-    rpt.player_to_move = player == board.turn
-    save_repertoire(rpt)
-    clear()
-    print(f"Repertoire {name} created.")
-
-# TODO - rewrite this function into the current style
-# prompts user to choose starting position
-def get_starting_position() :
-    board = chess.Board()
-    while(True) :
+    colour_path = "Repertoires/" + colour
+    command = ""
+    while(command != "c") :
+        openings = os.listdir(colour_path)    
         clear()
-        print("\nChoose starting position.")
-        print_board(board,True)
-        print("\nEnter a move or hit [Enter] to select this position.")
-        print("'b' to go back one move")
-        print("'c' to close.")
-        uci = input("\n:")
+        print_colour_overview(colour,openings)
+        print_colour_options(openings)
+        command = (input("\n:"))
+        
+        if (represents_int(command) and 1 <= int(command) <= len(openings)) :
+            index = int(command) - 1
+            opening_menu(colour, openings[index])
+        elif (command == "n") :
+            new_opening(colour)
+        elif (command == "d" and len(openings) != 0) :
+            delete_opening(colour, openings)
 
-        if (uci == "c") :
-            return "CLOSE"
-        elif (uci == "b") :
-            try:
-                board.pop()
-            except IndexError:
-                print("Cannot go back from root position.")
-        elif (is_valid_uci(uci,board)) :
-            board.push(chess.Move.from_uci(uci))
-        elif (uci == "") :
-            return board
+def print_colour_overview(colour,openings) :
 
-###################
-# repertoire menu #
-###################
+    opening_width = 20
+
+    if (len(openings) == 0) :
+        print("You currently have no openings here.")
+        return
+
+    # print header
+    header = "ID".ljust(3) + "COV.".ljust(5) + "OPENING".ljust(opening_width)
+    header += "WAITING".ljust(9) + "LEARNED".ljust(9)
+    header += "TOTAL".ljust(6)
+    print(header)
+    
+    # print the stats for each repertoire
+    for index, opening in enumerate(openings) :
+        opening_path = "Repertoires/" + colour + "/" + opening
+        waiting = learned = total = 0
+        for variation in os.listdir(opening_path) :
+            variation_path = opening_path + "/" + variation
+            repertoire = open_repertoire(variation_path)
+            counts = get_counts(repertoire)
+            waiting += counts[0] + counts[1] + counts[2] + counts[5]
+            learned += counts[3]
+            total += counts[6]
+
+        id = index + 1
+        info = str(id).ljust(3)
+        if (total != 0) :
+            coverage = int(round(learned / total * 100))
+            info += (str(coverage) + "% ").rjust(5)
+        else :
+            info += "".ljust(5)
+        info += str(opening).ljust(opening_width)
+        info += str(waiting).ljust(9)
+        info += str(learned).ljust(9)
+        info += str(total).ljust(7)
+        print(info)
+
+def print_colour_options(openings) :
+
+    print ("")
+    if (len(openings) != 0) :
+        print("[ID] select")
+    print("'n' new")
+    if (len(openings) != 0) :
+        print("'d' delete")
+    print("'c' close")
+
+################
+# opening menu #
+################
+            
+def opening_menu(colour, opening):
+
+    opening_path = "Repertoires/" + colour + "/" + opening
+    command = ""
+    while(command != "c") :
+        variations = os.listdir(opening_path)
+        clear()
+        print_opening_overview(colour, opening, variations)
+        print_opening_options(variations)
+        command = (input("\n:"))
+        
+        if (represents_int(command) and 1 <= int(command) <= len(variations)) :
+            index = int(command) - 1
+            variation_path = opening_path + "/" + variations[index]
+            variation_menu(variation_path)
+        elif (command == "n") :
+            new_variation(colour, opening)
+        elif (command == "d" and len(variations) != 0) :
+            delete_variation(colour, opening, variations)
+
+def print_opening_overview(colour, opening, variations) :
+
+    name_width = 20
+
+    if (len(variations) == 0) :
+        print("You currently have no variations here.")
+        return
+
+    # print header
+    header = "ID".ljust(3) + "COV.".ljust(5) + "VARIATION".ljust(name_width)
+    header += "WAITING".ljust(9) + "LEARNED".ljust(9)
+    header += "TOTAL".ljust(6)
+    print(header)
+    
+    # print the stats for each repertoire
+    for index, variation in enumerate(variations) :
+        variation_path = "Repertoires/" + colour + "/" + opening + "/" + variation
+        repertoire = open_repertoire(variation_path)
+        counts = get_counts(repertoire)
+        waiting = counts[0] + counts[1] + counts[2] + counts[5]
+        learned = counts[3]
+        total = counts[6]
+
+        id = index + 1
+        info = str(id).ljust(3)
+        if (total != 0) :
+            coverage = int(round(learned / total * 100))
+            info += (str(coverage) + "% ").rjust(5)
+        else :
+            info += "".ljust(5)
+        info += str(variation.split('.')[0]).ljust(name_width)
+        info += str(waiting).ljust(9)
+        info += str(learned).ljust(9)
+        info += str(total).ljust(7)
+        print(info)
+
+def print_opening_options(variations) :
+    print ("")
+    if (len(variations) != 0) :
+        print("[ID] select")
+    print("'n' new")
+    if (len(variations) != 0) :
+        print("'d' delete")
+    print("'c' close")
+
+# creates a new opening for the given colour
+def new_opening(colour) :
+    
+    colour_path = "Repertoires/" + colour
+    name = input("\nName:")
+    opening_path = colour_path + "/" + name
+    while (os.path.exists(opening_path)) :
+        name = input("That name is taken.\nChoose another:")
+        opening_path = colour_path + "/" + name
+    os.mkdir(opening_path)
+
+def delete_opening(colour, openings) :
+    # TODO: the prompting should go in the calling function
+    command = input("\nID to delete:")
+    if (represents_int(command) and 1 <= int(command) <= len(openings)) :
+        index = int(command) - 1
+        opening = openings[index]
+        print (f"you are about to permanently delete `{opening}'.")
+        check = input("are you sure:")
+        if (check == "y") :
+            opening_path = "Repertoires/" + colour + "/" + opening
+            shutil.rmtree(opening_path)
+    
+##################
+# variation menu #
+##################
 
 # displays the overview of the given repertoire `name'
 
-def repertoire_menu(filename) :
+def variation_menu(variation_path) :
     command = ""
     while(command != "c") :
-        repertoire = open_repertoire(filename)
+        repertoire = open_repertoire(variation_path)
         counts = get_counts(repertoire)
         clear()
-        print_repertoire_overview(repertoire,counts)
-        print_repertoire_options(repertoire,counts)
+        print_variation_overview(repertoire,counts)
+        print_variation_options(repertoire,counts)
         command = input("\n:")
         if (command == "m") :
-            manage(filename)
+            manage(variation_path)
         elif (command == "t") :
-            train(filename)
+            train(variation_path)
 
-def print_repertoire_overview(repertoire,counts) :
+def print_variation_overview(repertoire,counts) :
     # setup
     tag_width = 14
     if (counts[0] + counts[1] + counts[2] + counts[5] > 0) :
@@ -368,19 +464,71 @@ def print_repertoire_overview(repertoire,counts) :
     print("Reachable".ljust(tag_width) + str(counts[6]))
     print("Total".ljust(tag_width) + str(total))
 
-def print_repertoire_options(repertoire,counts) :
+def print_variation_options(repertoire,counts) :
     print("\n'm' manage")
     if (counts[0] + counts[1] + counts[2] + counts[5] > 0) :
         print("\n't' train")
     print("'c' close")
 
+# creates an empty repertoire for a new variation
+def new_variation(colour, opening) :
+    
+    player = colour == "White"
+    opening_path = "Repertoires/" + colour + "/" + opening
+    # get user choices
+    board = get_starting_position()
+    if (board == "CLOSE") :
+        return
+    clear()
+    print_board(board,True)
+    #colour = input("\nYou play as:\n'w' for White\n'b' for Black\n\n:")
+    #while (colour != "b" and colour != "w"):
+    #    colour = input(":")
+    name = input("\nName:")
+    while (os.path.exists(rpt_path(name))) :
+        name = input("That name is taken.\nChoose another:")
+    variation_path = opening_path + "/" + name + ".rpt"
+        
+    # create the repertoire
+    repertoire = chess.pgn.Game()
+    repertoire.setup(board)
+    repertoire.meta = MetaData(name, player)
+    repertoire.training = False
+    repertoire.player_to_move = player == board.turn
+    save_repertoire(variation_path, repertoire)
+
+# TODO - rewrite this function into the current style
+# prompts user to choose starting position
+def get_starting_position() :
+    board = chess.Board()
+    while(True) :
+        clear()
+        print("\nChoose starting position.")
+        print_board(board,True)
+        print("\nEnter a move or hit [Enter] to select this position.")
+        print("'b' to go back one move")
+        print("'c' to close.")
+        uci = input("\n:")
+
+        if (uci == "c") :
+            return "CLOSE"
+        elif (uci == "b") :
+            try:
+                board.pop()
+            except IndexError:
+                print("Cannot go back from root position.")
+        elif (is_valid_uci(uci,board)) :
+            board.push(chess.Move.from_uci(uci))
+        elif (uci == "") :
+            return board
+    
 ###############
 # manage menu #
 ###############
 
 # user management of repertoire as a pgn
-def manage(filename):
-    repertoire = open_repertoire(filename)
+def manage(variation_path):
+    repertoire = open_repertoire(variation_path)
     player = repertoire.meta.player
     board = repertoire.board()
     node = repertoire        
@@ -410,17 +558,9 @@ def manage(filename):
 
     #threshold = compute_learning_threshold(repertoire)
     #normalise(repertoire,)
-    save_repertoire(repertoire)    
+    save_repertoire(variation_path, repertoire)    
     clear()
-    print(f"Saved {rpt_name(filename)}.")
 
-"""
-def compute_learning_threshold(repertoire) :
-    learning_date = 
-    learned_today = repertoire.meta.num_new_learned[1]
-    if (datetime.date.today() == repertoire.meta.num_new_learned[0]) :
-        learned_today = 
-"""
 def print_node_overview(node,player,board) :
     print_turn(board)
     print_board(board,player)
@@ -491,8 +631,8 @@ def normalise(node,threshold) :
 # train menu #
 ##############
 
-def train(filename):
-    repertoire = open_repertoire(filename)
+def train(variation_path):
+    repertoire = open_repertoire(variation_path)
     player = repertoire.meta.player
     board = repertoire.board()
     node = repertoire        
@@ -513,7 +653,7 @@ def train(filename):
         handle_card_result(result,card,queue,repertoire)
 
     # save and quit trainer
-    save_repertoire(repertoire)
+    save_repertoire(variation_path, repertoire)
 
 def play_card(card,repertoire) :
     root = card[0]
@@ -678,127 +818,3 @@ def generate_training_queue(node,board) :
 
 main_menu()
 
-
-# temp copied code
-
-"""        
-    node = game
-    board = node.board()
-    player = board.turn
-
-    result = query_node(node)
-    
-    while (result != "SAVE") :
-        if (result == "BACK") :
-            if (node != game) :
-                node = node.parent
-                
-        elif (result == "DELETE") :
-            uci = input("delete move:")
-            if (is_valid_uci(uci,node.board())) :
-                move = chess.Move.from_uci(uci)
-                if (node.has_variation(move)) :
-                    node.remove_variation(move)
-
-        elif (result == "PROMOTE") :
-            uci = input("promote move:")
-            if (is_valid_uci(uci,node.board())) :
-                move = chess.Move.from_uci(uci)
-                if (node.has_variation(move)) :
-                    node.promote_to_main(move)
-                           
-        elif (result != "INVALID") :
-            move = chess.Move.from_uci(result)
-            if (not node.has_variation(move)) :
-                node.add_main_variation(move)
-            node = node.variation(move)
-            board = node.board()                        
-
-        result = query_node(node)
-"""
-
-def folder_path(name) :
-    return data_path + name + "/"
-def pgn_path(name) :
-    return folder_path(name) + name + ".pgn"
-failure_string = " "
-
-data_path = "Repertoires/"
-
-##########
-# load() #
-##########
-
-# loads a saved repertoire
-# checks that the file exists and can be opened as a pgn by python-chess
-# return the path to the loaded repertoire file
-def load() :
-    clear()
-    file_path = input("filename:")
-    try:
-        pgn = open(file_path, "r")
-    except:
-        clear()
-        print("\nFile error.")
-        return
-    repertoire = chess.pgn.read_game(pgn)
-    pgn.close()
-    clear()
-    print("Loaded repertoire `" + str(file_path) + "'.")
-    return file_path
-
-
-# returns the parsed repertoire from its file path
-def get_pgn_game(repertoire) :
-    game = chess.pgn.read_game(repertoire.pgn)
-    return game
-
-def is_candidate(node,player) :
-    return (node.board().turn == player and node.parent != None)
-
-def is_response(node,player) :
-    return (node.board().turn != player and node.parent != None)
-
-# tells you whether a training node is the last training node in that line
-
-def is_leaf(training_node) :
-    if (training_node.is_end()) :
-        return True
-    for child in training_node.variations :
-        if (not child.is_end()) :
-            return False
-    return True
-
-# returns the set of responses at or deeper than the given node
-def get_responses(node,root) :
-    responses = []
-    if (is_response(node,root)) :
-        responses.append(node)
-    if (not node.is_end()) :
-        for child in node.variations :
-            responses += get_responses(child,root)
-    return responses
-
-# returns repertoire name from repertoire filepath (wrt rep_path)
-
-def get_full_counts(node) :
-    counts = [0,0,0,0,0]
-    if (node.training) :
-        status = node.training.status
-        if (status == NEW) :
-            counts[0] += 1
-        elif (status == FIRST_STEP) :
-            counts[1] += 1
-        elif (status == SECOND_STEP) :
-            counts[2] += 1
-        elif (status == REVIEW) :
-            counts[3] += 1
-        elif (status == INACTIVE) :
-            counts[4] += 1
-
-    for child in node.variations :
-        child_counts = get_full_counts(child)
-        for index in range(5) :
-            counts[index] += child_counts[index]
-
-    return counts
