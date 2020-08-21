@@ -15,3 +15,8 @@ opening lines to add:
 development:
 
 grouping of openings into folders
+
+removal of the rep module - there are some issues with pickling;
+try to identify which repertoires where pickled when the rep module was pickled
+(i.e. by placing them outside the Repertoires/ folder temporarily)
+and devise a method of retaining the training data while cleaning the references to the rep module
