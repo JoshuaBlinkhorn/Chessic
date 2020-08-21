@@ -2,6 +2,8 @@ opening lines to add:
 
 1) the `new line' in the Max Lange
 
+1.5) playing white with the ..d5 Bd5 Qd5 Nc3 trick
+
 2) the two knights with 4.d3
 
 3) the active reply to the Petroff
