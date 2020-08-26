@@ -7,6 +7,7 @@ import pickle
 import datetime
 import time
 import shutil
+from colorama import Fore, Back, Style
 
 NEW = 0
 FIRST_STEP = 1
@@ -30,6 +31,13 @@ class  MetaData:
 ########
 # misc #
 ########
+
+# permutation for flipping the board
+board_flip = [63,62,61,60,59,58,57,56,55,54,53,52,51,50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]
+
+# unicode values of pieces
+white_pieces = ['\u2654','\u2655','\u2656','\u2657','\u2658','\u2659']
+black_pieces = ['\u265a','\u265b','\u265c','\u265d','\u265e','\u265f']
 
 # path to data directory
 rep_path = "Repertoires"
@@ -69,18 +77,54 @@ def print_turn(board) :
 
 # pretty prints the board
 def print_board(board,player) :
-    string = board.unicode(invert_color = True, empty_square = ".")
-    print("")
-    if (player) :
-        print(string)
-    else :
-        for row in range(8) :
-            row_string = ""        
-            for column in range(15) :
-                row_string += string[(7-row) * 16 + (14 - column)]
-            print(row_string)            
+    
+    # convert python chess unicode board into array of 64 characters
+    array = pack_string(board.unicode(invert_color = False, empty_square = " "))
+    if (not player) :
+        new_array = array.copy()
+        for index in range(64) :
+            new_array[index] = array[board_flip[index]]
+        array = new_array
+
+    board_string = ""
+    for row in range(8) :
+        for column in range(8) :
+            index = (row * 8) + column
+            # set piece colour
+            if (array[index] in white_pieces) :
+                piece_colour = Fore.WHITE
+            else :
+                piece_colour = Fore.BLACK
+
+            # for uniform treatment of chess characters
+            if (array[index] in black_pieces) :
+                array[index] = white_pieces[black_pieces.index(array[index])]
+
+            # set background colour
+            case_1 = column % 2 == 1 and row % 2 == 1
+            case_2 = column % 2 == 0 and row % 2 == 0
+            if (case_1 or case_2) :
+                square_colour = Back.CYAN
+            else :
+                square_colour = Back.GREEN
+
+            # write square
+            board_string += (square_colour + piece_colour + array[index] + ' ')
             
-        
+        board_string += (Style.RESET_ALL)
+        if (row < 7) :
+            board_string += '\n'
+
+    print(board_string)
+
+# places the python chess unicode string into 64-char array
+def pack_string(string) :
+    array = []
+    for index in range(64) :
+        array += string[index * 2]
+    return array
+
+    
 # prints repertoire moves for the given node
 def print_moves(node) :
     if (node.player_to_move) :
@@ -664,11 +708,11 @@ def play_card(card,repertoire) :
     # front of card
     front = root.variations[0]
     if (status == 0) :
-        print("\nNEW : this is a position you haven't seen before")
+        print("\nNEW : this is a position you haven't seen before\n")
     if (status == 1 or status == 2) :
-        print("\nLEARNING : this is a position you're currently learning")
+        print("\nLEARNING : this is a position you're currently learning\n")
     if (status == 3) :
-        print("\nRECALL : this is a position you've learned, due for recall")
+        print("\nRECALL : this is a position you've learned, due for recall\n")
 
     print_board(front.board(),player)
     if (status == 0) :
