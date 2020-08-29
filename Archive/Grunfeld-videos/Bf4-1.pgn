@@ -1,0 +1,23 @@
+[Result "*"]
+[Date "2020.08.28"]
+[Round "1"]
+[Event "?"]
+[Black "?"]
+[FEN "rnbqkb1r/ppp1pp1p/5np1/3p4/2PP1B2/2N5/PP2PPPP/R2QKBNR b KQkq -"]
+[Site "Earth"]
+[White "?"]
+
+1... Bg7 2. Rc1 
+( 1. Nf3 O-O 2. Rc1 dxc4 3. e3 ( 3. e4 c5 4. dxc5 Qa5 5. e5 Nh5 6. Be3 ( 6. Bd2 Qxc5 7. Be3 Qa5 8. Qd5 ( 8. Bxc4 Nc6 ) 9... Qxd5 10. Nxd5 Nc6 ) 7... Rd8 8. Nd2 Bxe5 9. Bxc4 Nc6 10. O-O ( 9. Qb3 Nd4 10. Bxd4 ( 10. Bxf7+ Kg7 11. Qc4 b5 12. cxb6 Ba6 ) 11... Rxd4 12. Nf3 Re4+ 13. Kf1 Rxc4 14. Qxc4 Be6 15. Qe4 Bxc3 16. Rxc3 ( 15. bxc3 Qxc5 ) 16... Qxa2 ) 10... Qc7 11. Nd5 ( 10. h3 Nf6 ) 11... Bxh2+ 12. Kh1 Qb8 ) 4... Be6 ( 4... c5 5. Bxc4 cxd4 6. Nxd4 ( 5. e4 ) 6... Bd7 7. Nb3 ( 6. O-O Nc6 7. Nb3 Na5 ) 7... Nc6 8. Nc5 Bf5 9. O-O ( 8. Qxd8 Rfxd8 9. Nxb7 Rdc8 ) 9... Qb6 ) 4. Ng5 Bd5 ) 
+( 1. e3 O-O 2. cxd5 ( 2. Nf3 c5 3. dxc5 Ne4 4. Rc1 Nd7 5. cxd5 Qa5 6. Nd4 Nxc3 7. bxc3 Nxc5 8. Bc4 Bd7 9. O-O Na4 10. Qb3 Nb6 11. Bb5 Bxd4 12. Bxd7 Bg7 ) ( 2. Rc1 Be6 3. c5 ( 3. Qb3 c5 4. Qxb7 ( 4. Nf3 Nc6 5. dxc5 Ne4 6. Qxb7 Bxc3+ 7. bxc3 Rc8 ) 5... Qb6 6. Qxb6 axb6 7. Nf3 dxc4 8. dxc5 bxc5 9. Ng5 Bd5 10. Rd1 ( 9. Nxd5 Nxd5 10. Bxc4 Nxf4 11. exf4 Bxb2 12. Rc2 Bf6 ) 10... Bc6 11. Bxc4 Nbd7 12. O-O Nb6 13. Be2 Nfd5 ) 4... c6 5. Bd3 ( 4. h3 b6 5. b4 a5 6. a3 ( 6. b5 bxc5 7. dxc5 a4 8. b6 Nbd7 9. Nxa4 Ra5 ) ( 6. cxb6 Qxb6 7. b5 a4 8. Bd3 cxb5 9. Nxb5 Na6 10. Ne2 ( 10. a3 Ne4 11. Ne2 Qa5+ 12. Kf1 Bd7 ) 11... Qa5+ 12. Nbc3 ( 11. Qd2 Nb4 ) 12... Nb4 13. Bb1 a3 ) 7... axb4 8. axb4 bxc5 9. bxc5 Ra3 ) 5... Bg4 6. Qc2 Nfd7 7. Bxb8 ( 6. h3 e5 ) 7... Nxb8 8. h3 Bc8 9. f4 b6 10. Na4 e5 ) 3... Nxd5 4. Nxd5 Qxd5 5. Bxc7 Na6 6. Bxa6 Qxg2 7. Qf3 Qxf3 8. Nxf3 bxa6 9. Rg1 ( 8. Rc1 f6 9. Ke2 Bg4 10. Rhg1 Bh5 ) 9... f6 10. Rc1 Rf7 11. Ke2 Bd7 ) 
+2... Nh5 3. Bg5 
+( 2. Be3 dxc4 3. Qa4+ Nc6 4. Nf3 O-O 5. Qxc4 Be6 6. Qc5 Qd6 ) 
+( 2. Bd2 c5 3. dxc5 ( 3. e3 dxc4 4. Bxc4 ( 4. dxc5 Nd7 5. Qa4 O-O 6. Qxc4 Ne5 ) ( 4. d5 a6 5. Bxc4 ( 5. a4 e6 6. Bxc4 exd5 7. Bxd5 ( 7. Nxd5 O-O 8. Bc3 Be6 ) 8... O-O 9. Nf3 Nf6 10. Bc4 Nc6 ) 6... b5 ) 5... cxd4 6. exd4 Bxd4 7. Nb5 Bb6 8. Nf3 ( 7. Qb3 O-O 8. Bh6 Nc6 9. Bxf8 Qxf8 10. Nf3 Nf4 11. O-O Be6 ) 8... O-O 9. O-O Nc6 ) 4... d4 5. Na4 O-O 6. g3 e5 7. Bg2 Nc6 ) 
+3... h6 4. Bh4 
+( 3. Bd2 dxc4 4. e3 Be6 5. Nf3 c6 6. Ne4 Bf5 7. Nc5 ( 7. Ng3 Nxg3 8. hxg3 b5 9. b3 cxb3 10. Qxb3 ) 8... b6 9. Na4 b5 ) 
+4... c5 5. e3 
+( 4. dxc5 d4 ) 
+5... cxd4 6. Nxd5 
+( 5. exd4 Nc6 6. Nxd5 ( 6. Nf3 Bg4 7. cxd5 Nxd4 8. Be2 ( 8. Qa4+ Bd7 9. Qd1 Nf5 ) 9... Nf4 ) 7... Be6 ) 
+6... Nc6 7. exd4 Be6 *
+

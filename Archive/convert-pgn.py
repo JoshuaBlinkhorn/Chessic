@@ -4,12 +4,10 @@ import rep
 import datetime
 import pickle
 
-rep_path = "Repertoires"
-
 def process_node(node,player_to_move) :
     if (node == game) :
         node.training = False
-        node.player_to_move = False
+        node.player_to_move = player_to_move
     else :
         if (player_to_move == False) :
             node.training = rep.TrainingData()
@@ -21,13 +19,10 @@ def process_node(node,player_to_move) :
             process_node(child, not player_to_move)
 
 def save_repertoire (repertoire) :
-    filename = rpt_path(repertoire.meta.name)
+    filename = repertoire.meta.name + ".rpt"
     update(repertoire)
     with open(filename, "wb") as file :
         pickle.dump(repertoire,file)
-
-def rpt_path(name) :
-    return rep_path + "/" + name + ".rpt"
 
 def update(repertoire) :
     learning_date = repertoire.meta.learning_data[0]
@@ -59,11 +54,11 @@ def normalise(node,threshold) :
                     threshold -= 1
 
         
-pgn = open("trax-1.rpt")
+pgn = open("Opening-PGNs/old-stodge.pgn")
 game = chess.pgn.read_game(pgn)
             
 # add root node data
-game.meta = rep.MetaData("traxler", False)
+game.meta = rep.MetaData("the-old-stodge", False)
 
 # add training node data
 process_node(game,False)
