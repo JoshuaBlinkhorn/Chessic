@@ -307,7 +307,8 @@ def colour_menu(colour):
     colour_path = "Repertoires/" + colour
     command = ""
     while(command != "c") :
-        openings = os.listdir(colour_path)    
+        openings = os.listdir(colour_path)
+        openings.sort()
         clear()
         print_colour_overview(colour,openings)
         print_colour_options(openings)
@@ -380,6 +381,7 @@ def opening_menu(colour, opening):
     command = ""
     while(command != "c") :
         variations = os.listdir(opening_path)
+        variations.sort()
         clear()
         print_opening_overview(colour, opening, variations)
         print_opening_options(variations)
