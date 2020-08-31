@@ -1,0 +1,17 @@
+[Result "*"]
+[Date "2020.08.30"]
+[Round "1"]
+[Event "?"]
+[Black "?"]
+[FEN "rnbq1rk1/ppp1ppbp/3p1np1/8/3PPP2/2NB1N2/PPP3PP/R1BQK2R b KQ -"]
+[Site "Earth"]
+[White "?"]
+
+1... Na6 2. O-O c5 3. d5 Nc7 4. a4 Rb8 5. Qe1 a6 
+( 5... b6 ) 
+( 5... e6 ) 
+( 5... Bg4 ) 
+5. a5 b5 
+( 6... Bg4 7. f5 Bxf3 8. Rxf3 ) 
+6. axb6 Rxb6 7. Nd2 Bd7 8. Nc4 *
+
