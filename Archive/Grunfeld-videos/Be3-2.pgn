@@ -1,0 +1,14 @@
+[Result "*"]
+[Date "2020.09.03"]
+[Round "1"]
+[Event "?"]
+[Black "?"]
+[FEN "rnb1k2r/pp2ppbp/6p1/q1p5/3PP3/2P1BN2/P4PPP/R2QKB1R w KQkq -"]
+[Site "Earth"]
+[White "?"]
+
+1. Qd2 Nc6 2. Rd1 
+( 2. Rc1 cxd4 3. cxd4 Qxd2+ 4. Kxd2 O-O 5. Bb5 ( 5. d5 Rd8 6. Ke1 ( 6. Kc2 Na5 7. Bg5 Kf8 8. Bf4 ( 8. Kb1 b6 9. Rc7 Rd7 10. Rc2 Rd8 ) 8... b6 9. Bc7 Rd7 10. Kb1 ( 10. Kd1 Nb7 11. Bb5 Nc5 12. Bf4 ( 12. Bc6 Rxc7 13. Bxa8 Ba6 ) ( 12. Bxd7 Bxd7 13. Be5 ( 13. Ke2 Bh6 14. Rb1 ( 14. Rxc5 bxc5 15. Rb1 a6 ) 14... Nxe4 ) 13... Ba4+ 14. Ke2 Bh6 ) ( 12. Bg3 Bh6 13. Rc2 ( 13. Rxc5 bxc5 14. Bc6 Rb7 15. Bxb7 Bxb7 16. Ne5 e6 17. Nd7+ Ke8 18. Nxc5 Rc8 ) ( 13. Bxd7 Bxd7 14. Rxc5 bxc5 15. Kc2 f5 ) 13... Rd8 14. Bc6 Bd7 15. Bxa8 Rxa8 ) 12... Rd8 13. Rxc5 bxc5 14. Bc6 e5 15. Bxa8 exf4 ) 10... Rxd5 11. exd5 Bf5+ 12. Rc2 Bxc2+ 13. Kxc2 Rc8 ) 6... Na5 7. Bg5 Bd7 8. Bd3 f5 9. Bxe7 ( 9. Nd2 Rdc8 10. Ke2 e6 ) ( 9. e5 Be8 10. d6 Rdc8 11. dxe7 ( 11. Ke2 exd6 12. exd6 Bf8 ) 11... h6 12. Bd2 Rxc1+ 13. Bxc1 Rc8 14. Ke2 Nc6 ) 9... Re8 10. d6 fxe4 11. Bxe4 Bc6 12. Ng5 h6 13. Bxg6 hxg5 14. Bxe8 Rxe8 ) 5... f5 6. exf5 Bxf5 7. Bxc6 bxc6 8. Rxc6 Rab8 ) 
+( 2. Rb1 a6 3. Rc1 f5 4. d5 ( 4. dxc5 fxe4 5. Nd4 Bd7 6. Be2 Rd8 7. O-O Nxd4 8. Bxd4 Bg4 9. Bxg4 Bxd4 ) ( 4. exf5 Bxf5 5. dxc5 Qa3 6. Be2 ( 6. Bc4 Rd8 7. Nd4 Nxd4 8. cxd4 Bxd4 ) 6... Rd8 7. Nd4 Nxd4 8. cxd4 Bxd4 9. Bxd4 Rxd4 10. Qxd4 Qxc1+ ) ( 4. e5 f4 5. Bxf4 Bg4 6. Be2 ( 6. Qb2 Bxf3 7. gxf3 Nxd4 8. Qxb7 O-O ) ( 6. d5 Bxf3 7. gxf3 Nxe5 ) 6... Rd8 7. Ng5 ( 7. h3 Bxf3 8. Bxf3 O-O 9. Bxc6 bxc6 10. g3 Rf5 11. O-O cxd4 12. cxd4 Qxd2 13. Bxd2 Bxe5 ) 7... Bf5 8. Nf3 ( 8. e6 cxd4 9. cxd4 Qxd2+ 10. Bxd2 Bh6 ) 8... Bg4 ) ( 4. Bd3 cxd4 5. Nxd4 Ne5 6. O-O Nxd3 7. Qxd3 e5 8. Nf3 ( 8. Nb3 Qc7 9. Qd5 ( 9. Bc5 Be6 10. Bd6 Qc6 11. c4 Rd8 12. c5 Qxe4 13. Qc3 ( 13. Qxe4 fxe4 14. Na5 b5 ) 13... Kf7 14. Rfe1 Qa4 15. Bxe5 Bxe5 16. Qxe5 Rhe8 17. c6 Bxb3 18. Qc7+ Kf8 19. axb3 Qxc6 20. Qxh7 Rxe1+ 21. Rxe1 Re8 ) 9... Qf7 10. f3 ( 10. Qd6 Qe6 11. Qb4 f4 12. Bb6 f3 13. gxf3 Qf6 14. Rfd1 Bh3 15. Qa4+ Kf7 ) ( 10. Bc5 Be6 11. Qd6 Qd7 12. Qb6 Qc6 13. Qb4 Bxb3 14. axb3 a5 15. Qa3 b6 16. Bd6 fxe4 ) ( 10. Nc5 O-O 11. f3 ) 10... O-O 11. Nc5 Bf6 12. Rb1 ( 12. Rfd1 Rd8 13. Qxd8+ Bxd8 14. Rxd8+ Kg7 15. Rd5 fxe4 16. fxe4 b6 17. Nd3 Be6 18. Nxe5 ( 18. Rd6 Qe7 19. Rxb6 Kg8 20. Nxe5 Bh3 21. Bd4 Qg5 22. Rc2 Bxg2 23. Rxg2 Qc1+ 24. Kf2 Rf8+ 25. Kg3 Qf4+ 26. Kh3 Qh6+ ) 18... Qc7 19. Rd2 Kg8 ) 12... Qxd5 13. exd5 b5 14. a4 Rd8 15. Rfd1 f4 16. Bf2 Bf5 17. Ra1 ( 17. Ne4 Bxe4 18. fxe4 Rdc8 19. axb5 axb5 20. Be1 Rc4 ) 17... h5 ) 8... f4 9. Qc4 Qb5 10. Qc7 Qd7 11. Bb6 O-O ) 4... fxe4 5. Ng5 Ne5 6. Nxe4 c4 7. f4 Bf5 8. Nc5 ( 8. Nf2 O-O-O 9. fxe5 Rxd5 10. Bd4 h5 ) 8... Ng4 9. Bd4 Bxd4 10. Qxd4 Qa3 11. Rd1 ( 11. Qxh8+ Kf7 12. Qxh7+ Kf8 13. Ne6+ Ke8 ) 11... Nf6 12. Bxc4 Rc8 13. Nd3 Bxd3 14. Rxd3 b5 15. Bb3 Qc1+ 16. Rd1 Qxc3+ ) 
+*
+
