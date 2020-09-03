@@ -1,0 +1,15 @@
+[Result "*"]
+[Date "2020.09.02"]
+[Round "1"]
+[Event "?"]
+[Black "?"]
+[FEN "rnbqk2r/ppp1ppbp/5np1/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR w KQkq -"]
+[Site "Earth"]
+[White "?"]
+
+1. Bxf6 Bxf6 2. cxd5 c6 3. dxc6 
+( 3. e3 cxd5 4. Bb5+ Kf8 5. Nge2 Kg7 ) 
+( 3. Rc1 O-O 4. dxc6 Qxd4 5. Qxd4 Bxd4 6. c7 ( 6. cxb7 Bxb7 7. Nf3 ( 7. e3 Bf6 8. f3 ( 8. Nf3 ) 8... Nd7 ) 7... Bg7 8. e3 Nd7 9. Bb5 ( 9. Be2 Rab8 ) 9... Rfd8 10. O-O Bxf3 11. gxf3 Rab8 12. b3 ( 12. Bxd7 Rxd7 13. Rc2 Rdb7 ) ( 12. a4 Ne5 13. Kg2 Nd3 14. Bxd3 Rxd3 15. Rc2 Rb4 ) 12... Bxc3 13. Bxd7 Bd2 14. Rc7 Ba5 15. Rc5 Bb4 16. Rd5 ( 16. Rc7 Ba5 ) 16... Bd6 ) 6... Nc6 7. Nf3 Bb6 8. Nd5 Ba5+ ) 
+( 3. e4 Bg7 4. Rc1 ( 4. Bc4 cxd5 5. Bb5+ ( 5. exd5 O-O 6. Nge2 Nd7 7. O-O Nf6 ) 5... Nd7 6. Nxd5 a6 7. Bxd7+ ( 7. Ba4 b5 8. Bc2 Nb6 ) 7... Bxd7 8. Ne2 O-O 9. O-O Bc6 10. Ndc3 b5 ) ( 4. Nf3 O-O 5. Qb3 ( 5. Bc4 Bg4 6. O-O cxd5 7. Bxd5 ( 7. exd5 Bxf3 8. Qxf3 Bxd4 ) 7... Nc6 ) ( 5. dxc6 Nxc6 6. d5 Ne5 7. Nxe5 ( 7. Be2 Nxf3+ 8. Bxf3 Qd6 9. O-O Bd7 10. Qe2 Rac8 11. Rac1 a6 12. Bg4 Bxg4 13. Qxg4 Rc4 ) 7... Bxe5 8. Be2 Qd6 9. g3 Bh3 ) 5... cxd5 6. exd5 Nd7 7. Bd3 ( 7. a4 a5 8. Bd3 Nb6 ) 7... Nb6 8. O-O e6 9. dxe6 Bxe6 10. Qb4 ( 10. Qa3 Bg4 11. Be4 Bxf3 12. Bxf3 Nc4 ) 10... Nd5 11. Qxb7 Nxc3 12. bxc3 Bd5 ) ( 4. dxc6 Nxc6 5. d5 Qb6 6. Rb1 ( 6. dxc6 Qxb2 7. Nd5 Qxa1 8. Nc7+ Kf8 9. Qxa1 Bxa1 10. Nxa8 Bc3+ 11. Kd1 Ba5 ) ( 6. Qd2 Nd4 7. Nge2 ( 7. Na4 Qd6 8. Ne2 Nxe2 9. Bxe2 Bd7 10. Nc3 O-O 11. O-O Rac8 ) 7... O-O 8. Nxd4 ( 8. Rd1 e5 9. dxe6 ( 9. Nc1 Qd8 10. Bc4 Qh4 11. O-O Nf3+ 12. gxf3 Bh6 ) 9... Bxe6 10. Nxd4 Rfd8 ) 8... Bxd4 9. Rd1 Bg7 10. Be2 Bd7 11. O-O Rac8 12. Kh1 Qc5 13. Rc1 Qb4 14. f3 e6 15. a3 Qd6 16. f4 e5 17. f5 ( 17. g3 Rfe8 18. Bf3 a6 ) 17... gxf5 18. exf5 Bh6 ) 6... Nd4 7. Bd3 O-O 8. Nge2 Bd7 9. O-O Rac8 10. Nxd4 Bxd4 11. Qd2 Rc7 12. Kh1 ( 12. Qf4 f6 ) 12... Rfc8 13. f4 Qa5 14. f5 Bxc3 15. bxc3 Qxc3 16. Qxc3 Rxc3 17. Rxb7 Rxd3 18. Rxd7 gxf5 19. exf5 ) 4... O-O 5. dxc6 ( 5. Nf3 cxd5 6. exd5 ( 6. Nxd5 Nc6 7. Bb5 Qa5+ 8. Nc3 Nxd4 9. Nxd4 Rd8 ) 6... Nd7 7. Bc4 Nb6 8. Bb3 Bg4 ) 5... Nxc6 6. d5 Nd4 ) 
+3... Bxd4 4. cxb7 Bxb7 *
+

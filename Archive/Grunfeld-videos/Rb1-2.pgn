@@ -1,0 +1,20 @@
+[Result "*"]
+[Date "2020.09.01"]
+[Round "1"]
+[Event "?"]
+[Black "?"]
+[FEN "rnbqk2r/pp2ppbp/6p1/2p5/3PP3/2P2N2/P4PPP/R1BQKB1R w KQkq -"]
+[Site "Earth"]
+[White "?"]
+
+1. Rb1 O-O 2. Be2 cxd4 3. cxd4 Qa5+ 4. Bd2 Qxa2 5. O-O Bg4 6. Bg5 h6 7. Be3 
+( 7. Bh4 g5 8. Bg3 Nc6 9. d5 Rad8 10. h3 ( 10. Re1 Bxf3 11. Bxf3 e6 12. Re2 Qa5 13. Rd2 Ne5 14. Rxb7 Nc4 15. Re2 ( 15. Rc2 exd5 16. exd5 Rfe8 ) 15... Ne5 ) ( 10. Qe1 Bxf3 11. Bxf3 Ne5 12. Rxb7 e6 13. dxe6 Qxe6 ) ( 10. Rxb7 e6 11. Bc7 ( 11. d6 Bxf3 12. Bxf3 Qa6 ) 11... Bxf3 12. gxf3 ( 12. Bxf3 Rd7 13. dxc6 ( 13. Qb1 Qxb1 14. Rfxb1 Rc8 15. dxc6 ( 15. Bg3 Rxb7 16. Rxb7 Nd4 ) 15... Rdxc7 ) 13... Rxd1 14. Rxd1 Qc2 15. Bd6 g4 16. Bxg4 Qxc6 17. Rc7 Qb6 ) 12... Nd4 ) 10... Bxf3 11. Bxf3 e6 12. Rxb7 Ne5 ) 
+( 7. Bxe7 Re8 8. Rxb7 Nd7 ) 
+7... Nc6 8. d5 
+( 8. Rxb7 Rab8 9. Rxb8 Rxb8 10. h3 Bxf3 11. Bxf3 Rd8 12. d5 Ne5 13. Qc1 a5 14. Qc7 Re8 15. Bf4 ) 
+8... Na5 9. Bc5 
+( 9. Rb4 Bxf3 10. Bxf3 Nc4 11. Bd4 Bxd4 12. Qxd4 b5 13. h4 ( 13. Ra1 Qc2 14. e5 Rab8 ) ( 13. Rxb5 Rab8 ) 13... Nd2 ) 
+9... b6 10. Bxe7 Rfe8 11. d6 Nc6 12. Qc1 
+( 12. Bb5 Nxe7 13. Bxe8 ( 13. h3 Bxf3 14. Qxf3 Rec8 15. dxe7 Qe6 16. e8=Q+ Rxe8 17. Bxe8 Rxe8 ) 13... Rxe8 14. dxe7 Be6 ) 
+12... Nxe7 13. Bc4 Qa5 *
+
