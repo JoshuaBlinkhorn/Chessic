@@ -7,5 +7,17 @@
 [Site "Earth"]
 [White "?"]
 
-*
+1. Bc4 c5 2. Ne2 Nc6 3. Be3 O-O 4. O-O 
+( 4. h4 Qa5 5. Kf1 b6 6. h5 Ba6 ) 
+( 4. Rc1 cxd4 5. cxd4 Qa5+ 6. Kf1 Qa3 7. h4 ( 7. Qd2 Rd8 8. d5 Ne5 9. Bb5 a6 10. Bc5 Qf3 11. gxf3 Bh3+ ) ( 7. Rc3 Qd6 8. h4 h5 9. f3 Rd8 10. Bd5 e5 ) 7... Bg4 8. f3 Qxe3 ) 
+4... Bd7 5. Rb1 
+( 5. Rc1 Rc8 6. Qd2 ( 6. f4 Bg4 7. d5 Na5 8. Bd3 e6 9. h3 ( 9. c4 b5 10. h3 bxc4 11. hxg4 cxd3 12. Qxd3 exd5 13. Qxd5 Qxd5 14. exd5 Rfd8 15. Rfd1 Nb7 ) 9... Bxe2 10. Bxe2 exd5 11. exd5 ( 11. Qxd5 Qxd5 12. exd5 Rfe8 13. Kf2 Re4 ) 11... Re8 12. Qd2 Qd6 13. f5 Qe5 14. Rf3 Rcd8 15. fxg6 hxg6 16. Rd1 ( 16. c4 Nc6 ) 16... Qxc3 17. Qxc3 Bxc3 18. Bxc5 Rxe2 19. Rxc3 Re5 ) 6... Qa5 7. Qb2 ( 7. d5 Ne5 8. Bb3 Qa6 9. c4 b5 ) 7... b6 ) 
+5... Qc7 6. f4 
+( 6. dxc5 Na5 7. Bd3 Rfd8 ) 
+( 6. Qc1 Rac8 7. Rd1 cxd4 8. cxd4 a6 ) 
+( 6. Qd2 Rad8 7. Bd3 ( 7. Bh6 Bxh6 8. Qxh6 cxd4 9. cxd4 Bg4 10. Nf4 Nxd4 11. Nxg6 Qd6 ) ) 
+( 6. Nf4 Rac8 7. Nd5 Qd8 8. Rxb7 Na5 ) 
+6... cxd4 7. cxd4 Nxd4 8. Bxd4 
+( 8. Bxf7+ Rxf7 9. Bxd4 e5 10. Bxe5 Bxe5 11. fxe5 Rxf1+ 12. Qxf1 Bc6 ) 
+8... Qxc4 9. Bxg7 Kxg7 *
 
