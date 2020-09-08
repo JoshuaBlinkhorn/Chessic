@@ -54,11 +54,11 @@ def normalise(node,threshold) :
                     threshold -= 1
 
         
-pgn = open("Grunfeld-videos/f3-1.pgn")
+pgn = open("Opening-PGNs/old-stodge.pgn")
 game = chess.pgn.read_game(pgn)
             
 # add root node data
-game.meta = rep.MetaData("f3-1", False)
+game.meta = rep.MetaData("the-old-stodge", False)
 
 # add training node data
 process_node(game,False)
