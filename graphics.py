@@ -3,7 +3,8 @@
 
 # SYNOPSIS 
 # This module implements a basic graphical chess board.
-# Typically only the function print_board() will be imported.
+# Typically only the functions clear() and print_board()
+# will be imported.
 
 # module imports
 from colorama import Fore, Back, Style # handles coloured printing
@@ -13,6 +14,13 @@ white_pieces = ['\u2654','\u2655','\u2656',
                 '\u2657','\u2658','\u2659']
 black_pieces = ['\u265a','\u265b','\u265c',
                 '\u265d','\u265e','\u265f']
+
+# clear()
+# `clears' the terminal screen
+def clear() :
+    height = 40
+    for x in range(height) :
+        print("")
 
 # print_board()        
 # Pretty prints the board given as a unicode string from

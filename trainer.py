@@ -1,32 +1,18 @@
 import os
 import chess
 import chess.pgn
-import random
+
 import time
 import pickle
 import datetime
 import time
 import shutil
-from graphics import print_board
 
-NEW = 0
-FIRST_STEP = 1
-SECOND_STEP = 2
-REVIEW = 3
-INACTIVE = 4
+import stats
+import items
 
-class TrainingData :
-    def __init__(self) :
-        self.status = INACTIVE
-        self.last_date = datetime.date.today()
-        self.due_date = datetime.date.today()
-        
-class  MetaData:
-    def __init__(self, name, player) :
-        self.name = name
-        self.player = player
-        self.learning_data = [datetime.date.today(),0]
-        self.learn_max = 10
+from graphics import print_board, clear
+from training import TrainingData, MetaData, play_card, handle_card_result, generate_training_queue
         
 ########
 # misc #
@@ -44,22 +30,14 @@ def represents_int(string):
 
 # checks whether a string is a legal move in uci notation
 def is_valid_uci(string,board) :
-    validity = False
     for move in board.legal_moves :
         if (string == move.uci()) :
-            validity = True
-            break
-    return validity
+            return True
+    return False
 
 ############
 # printing #
 ############
-
-# `clears' the screen
-def clear() :
-    height = 40
-    for x in range(height) :
-        print("")
 
 # prints the side to move
 def print_turn(board) :
@@ -108,81 +86,10 @@ def delete_variation(colour, opening, variations) :
             variation_path = "Repertoires/" + colour + "/" + opening + "/" + variation
             os.remove(variation_path)
 
-def save_repertoire (variation_path, repertoire) :
-    update(repertoire)
-    with open(variation_path, "wb") as file :
-        pickle.dump(repertoire,file)
-
-def open_repertoire (variation_path) :
-    with open(variation_path, "rb") as file :
-        repertoire = pickle.load(file)
-    update(repertoire)
-    return repertoire
-
-def update(repertoire) :
-    learning_date = repertoire.meta.learning_data[0]
-    learning_value = repertoire.meta.learning_data[1]
-    max_value = repertoire.meta.learn_max
-    today = datetime.date.today()
-    # only normalise if today is a new day
-    # normalise by the maximum value
-    if (learning_date < today) :
-        repertoire.meta.learning_data[0] = today
-        repertoire.meta.learning_data[1] = 0
-        normalise(repertoire,max_value)
-    else :
-        learning_threshold = max_value - learning_value
-        normalise(repertoire,learning_threshold)
-
 ##############
 # statistics #
 ##############
 
-def get_scheduled_counts(node) :
-    full_counts = get_counts(node)
-    return [full_counts[0],full_counts[1]+full_counts[2],full_counts[5]]
-
-def get_counts(node) :
-    # new first second review inactive due reachable total
-    counts = [0,0,0,0,0,0,0]
-    if (node.training) :
-        status = node.training.status
-        due_date = node.training.due_date
-        # first five counts' statuses are handled as integers
-        for index in range(5) :
-            if (status == index) :
-                counts[index] += 1
-        # due count
-        if (status == REVIEW and due_date <= datetime.date.today()) :
-            counts[5] += 1
-        # increment reachable count
-        counts[6] += 1
-
-    # recursive part
-    if (not node.is_end()) :
-        if (node.player_to_move) :
-            # search only the main variation
-            child_counts = get_counts(node.variations[0])
-            for index in range(7) :
-                counts[index] += child_counts[index]
-        else :
-            # search all variations
-            for child in node.variations :
-                child_counts = get_counts(child)
-                for index in range(7) :
-                    counts[index] += child_counts[index]
-
-    return counts
-
-def get_total_count(node) :
-    if (node.training) :
-        count = 1
-    else :
-        count = 0
-    if (not node.is_end()):
-        for child in node.variations :
-            count += get_total_count(child)                    
-    return count
         
 #############
 # main menu #
@@ -220,8 +127,8 @@ def print_main_overview() :
             opening_path = colour_path + "/" + opening
             for filename in os.listdir(opening_path) :
                 repertoire_path = opening_path + "/" + filename
-                repertoire = open_repertoire(repertoire_path)
-                counts = get_counts(repertoire)
+                repertoire = items.load_item(repertoire_path)
+                counts = stats.training_stats(repertoire)
                 waiting += counts[0] + counts[1] + counts[2] + counts[5]
                 learned += counts[3]
                 total += counts[6]
@@ -284,10 +191,11 @@ def print_colour_overview(colour,openings) :
     for index, opening in enumerate(openings) :
         opening_path = "Repertoires/" + colour + "/" + opening
         waiting = learned = total = 0
+        category_stats = stats.category_stats(opening_path)
         for variation in os.listdir(opening_path) :
             variation_path = opening_path + "/" + variation
-            repertoire = open_repertoire(variation_path)
-            counts = get_counts(repertoire)
+            repertoire = items.load_item(variation_path)
+            counts = stats.training_stats(repertoire)
             waiting += counts[0] + counts[1] + counts[2] + counts[5]
             learned += counts[3]
             total += counts[6]
@@ -300,9 +208,9 @@ def print_colour_overview(colour,openings) :
         else :
             info += "".ljust(5)
         info += str(opening).ljust(opening_width)
-        info += str(waiting).ljust(9)
-        info += str(learned).ljust(9)
-        info += str(total).ljust(7)
+        info += str(category_stats[stats.STAT_WAITING]).ljust(9)
+        info += str(category_stats[stats.STAT_LEARNED]).ljust(9)
+        info += str(category_stats[stats.STAT_SIZE]).ljust(7)
         print(info)
 
 def print_colour_options(openings) :
@@ -357,8 +265,8 @@ def print_opening_overview(colour, opening, variations) :
     # print the stats for each repertoire
     for index, variation in enumerate(variations) :
         variation_path = "Repertoires/" + colour + "/" + opening + "/" + variation
-        repertoire = open_repertoire(variation_path)
-        counts = get_counts(repertoire)
+        repertoire = items.load_item(variation_path)
+        counts = stats.training_stats(repertoire)
         waiting = counts[0] + counts[1] + counts[2] + counts[5]
         learned = counts[3]
         total = counts[6]
@@ -417,8 +325,8 @@ def delete_opening(colour, openings) :
 def variation_menu(variation_path) :
     command = ""
     while(command != "c") :
-        repertoire = open_repertoire(variation_path)
-        counts = get_counts(repertoire)
+        repertoire = items.load_item(variation_path)
+        counts = stats.item_stats_full(variation_path)
         clear()
         print_variation_overview(repertoire,counts)
         print_variation_options(repertoire,counts)
@@ -447,7 +355,7 @@ def print_variation_overview(repertoire,counts) :
     print("Due".ljust(tag_width) + str(counts[5]))
 
     # print remaining counts    
-    total = get_total_count(repertoire)
+    total = stats.total_training_positions(repertoire)
     print("")
     print("In review".ljust(tag_width) + str(counts[3]))
     print("Inactive".ljust(tag_width) + str(counts[4]))
@@ -485,7 +393,7 @@ def new_variation(colour, opening) :
     repertoire.meta = MetaData(name, player)
     repertoire.training = False
     repertoire.player_to_move = player == board.turn
-    save_repertoire(variation_path, repertoire)
+    items.save_item(variation_path, repertoire)
 
 # TODO - rewrite this function into the current style
 # prompts user to choose starting position
@@ -518,7 +426,7 @@ def get_starting_position() :
 
 # user management of repertoire as a pgn
 def manage(variation_path):
-    repertoire = open_repertoire(variation_path)
+    repertoire = items.load_item(variation_path)
     player = repertoire.meta.player
     board = repertoire.board()
     node = repertoire        
@@ -547,8 +455,7 @@ def manage(variation_path):
             board.push(move)
 
     #threshold = compute_learning_threshold(repertoire)
-    #normalise(repertoire,)
-    save_repertoire(variation_path, repertoire)    
+    items.save_item(variation_path, repertoire)    
     clear()
 
 def print_node_overview(node,player,board) :
@@ -594,35 +501,13 @@ def add_move(node,move) :
 
 # sets the card statuses based on the current environment
         
-def normalise(node,threshold) :
-    # configure training data
-    if (node.training) :
-        if (threshold <= 0) :
-            for status in [NEW,FIRST_STEP,SECOND_STEP] :
-                if (node.training.status == status) :
-                    node.training.status = INACTIVE
-        else : # threshold exceeds 0
-            if (node.training.status == INACTIVE) :
-                node.training.status = NEW
-            for status in [NEW,FIRST_STEP,SECOND_STEP] :
-                if (node.training.status == status) :
-                    threshold -= 1
-
-    if (not node.is_end()) :
-        if (node.player_to_move) : # call all children recursively
-            threshold = normalise(node.variations[0],threshold)
-        else : # call only the main variation
-            for child in node.variations :
-                threshold = normalise(child,threshold)
-                
-    return threshold
 
 ##############
 # train menu #
 ##############
 
 def train(variation_path):
-    repertoire = open_repertoire(variation_path)
+    repertoire = items.load_item(variation_path)
     player = repertoire.meta.player
     board = repertoire.board()
     node = repertoire        
@@ -634,7 +519,7 @@ def train(variation_path):
     command = ""
     while(len(queue) != 0) :
         card = queue.pop(0)
-        counts = get_counts(repertoire)
+        counts = stats.training_stats(repertoire)
         clear()
         print(f"{counts[0]} {counts[1]} {counts[2]} {counts[5]}")
         result = play_card(card,repertoire)
@@ -643,163 +528,7 @@ def train(variation_path):
         handle_card_result(result,card,queue,repertoire)
 
     # save and quit trainer
-    save_repertoire(variation_path, repertoire)
-
-def play_card(card,repertoire) :
-    root = card[0]
-    node = card[1]
-    status = node.training.status
-    player = repertoire.meta.player
-
-    # front of card
-    front = root.variations[0]
-    if (status == 0) :
-        print("\nNEW : this is a position you haven't seen before\n")
-    if (status == 1 or status == 2) :
-        print("\nLEARNING : this is a position you're currently learning\n")
-    if (status == 3) :
-        print("\nRECALL : this is a position you've learned, due for recall\n")
-
-    print_board(front.board(),player)
-    if (status == 0) :
-        print("\nGuess the move..")
-    else :
-        print("\nRecall the move..")
-    print(".. then hit [enter] or 'c' to close")
-    uci = input("\n:")
-    if (uci == "c") :
-        return "CLOSE"
-
-    # back of card
-    back = front.variations[0]
-    clear()    
-    print("Solution:")
-    print_board(back.board(),player)
-
-    if (status == 0) :
-        print("\nHit [enter] to continue.")
-        input("\n\n:")
-    if (status != 0) :
-        print("\n'h' hard    [enter] ok    'e' easy\n")
-        uci = input("\n:")
-   
-    while (True) :
-        if (uci == "e") :
-            return "EASY"
-        if (uci == "h") :
-            return "HARD"
-        if (uci == "") :
-            return "OK"
-        if (uci == "c") :
-            return "CLOSE"
-        uci = input(":")
-        
-        
-def handle_card_result(result,card,queue,repertoire) :
-    root = card[0]
-    node = card[1]
-    status = node.training.status
-    
-    today = datetime.date.today()
-    tomorrow = today + datetime.timedelta(days=1)
-    
-    if (status == NEW) :
-        print("Here")
-        node.training.status = FIRST_STEP
-        increase = int(round(3 * random.random()))
-        offset = min(1 + increase,len(queue))
-        queue.insert(offset,card)
-                    
-    elif (status == FIRST_STEP) :
-        if (result == "EASY") :
-            node.training.status = REVIEW
-            node.training.last_date = today
-            node.training.due_date = tomorrow
-            repertoire.meta.learning_data[1] += 1
-        elif (result == "OK") :
-            node.training.status = SECOND_STEP
-            increase = int(round(3 * random.random()))
-            offset = min(6 + increase,len(queue))
-            queue.insert(offset,card)
-        elif (result == "HARD") :
-            node.training.status = FIRST_STEP            
-            increase = int(round(3 * random.random()))
-            offset = min(1 + increase,len(queue))
-            queue.insert(offset,card)
-
-    elif (status == SECOND_STEP) :
-        if (result == "EASY") :
-            node.training.status = REVIEW
-            node.training.last_date = today
-            node.training.due_date = today + datetime.timedelta(days=3)
-            repertoire.meta.learning_data[1] += 1
-        elif (result == "OK") :
-            node.training.status = REVIEW
-            node.training.last_date = today
-            node.training.due_date = tomorrow
-            repertoire.meta.learning_data[1] += 1
-        elif (result == "HARD") :
-            node.training.status = FIRST_STEP            
-            increase = int(round(3 * random.random()))
-            offset = min(1 + increase,len(queue))
-            queue.insert(offset,card)
-            
-    elif (status == REVIEW) :
-        previous_gap = (node.training.due_date - node.training.last_date).days
-
-        if (result == "HARD") :
-            node.training.status = FIRST_STEP
-            offset = min(2,len(queue))
-            queue.insert(offset,card)
-            repertoire.meta.learning_data[1] -= 1
-
-        else :
-            if (result == "EASY") :
-                multiplier = 3 + random.random()
-            else :
-                multiplier = 2 + random.random()
-            new_gap = int(round(previous_gap * multiplier))
-            node.training.status = REVIEW
-            node.training.last_date = today
-            node.training.due_date = today + datetime.timedelta(days=new_gap)
-
-def generate_training_queue(node,board) :
-    # the board must be returned as it was given
-    queue = []    
-    
-    if (node.training) :
-        status = node.training.status
-        due_date = node.training.due_date
-        today = datetime.date.today()
-        if (status == 0 or status == 1 or status == 2 or (status == 3 and due_date <= today)) :
-                # add a card to the queue
-            solution = board.pop()
-            problem = board.pop()
-            game = chess.pgn.Game()
-            game.setup(board)
-            new_node = game.add_variation(problem)
-            new_node = new_node.add_variation(solution)
-            board.push(problem)
-            board.push(solution)
-            queue.append([game,node])
-
-    # recursive part
-    if (not node.is_end()) :
-        if (node.player_to_move) :
-            # search only the main variation
-            child = node.variations[0]
-            board.push(child.move)
-            queue += generate_training_queue(child,board)
-            board.pop()
-
-        else :
-            # search all variations
-            for child in node.variations :
-                board.push(child.move)
-                queue += generate_training_queue(child,board)
-                board.pop()
-
-    return queue
+    items.save_item(variation_path, repertoire)
 
     
 ############### 
