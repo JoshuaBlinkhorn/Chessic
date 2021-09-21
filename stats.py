@@ -6,7 +6,7 @@
 
 import datetime
 import training
-import items
+import access
 import os
 
 STAT_NEW = 0
@@ -16,6 +16,7 @@ STAT_REVIEW = 3
 STAT_INACTIVE = 4
 STAT_DUE = 5
 STAT_REACHABLE = 6
+STAT_TOTAL = 7
 
 STAT_WAITING = 0
 STAT_LEARNED = 1
@@ -34,15 +35,15 @@ def training_stats(node) :
         due_date = node.training.due_date
         if (status == training.NEW) :
             stats[STAT_NEW] += 1
-        elif (status == items.FIRST_STEP) :
+        elif (status == access.FIRST_STEP) :
             stats[STAT_FIRST_STEP] += 1            
-        elif (status == items.SECOND_STEP) :
+        elif (status == access.SECOND_STEP) :
             stats[STAT_SECOND_STEP] += 1            
-        elif (status == items.REVIEW) :
+        elif (status == access.REVIEW) :
             stats[STAT_REVIEW] += 1            
-        elif (status == items.INACTIVE) :
+        elif (status == access.INACTIVE) :
             stats[STAT_INACTIVE] += 1            
-        if (status == items.REVIEW and due_date <= datetime.date.today()) :
+        if (status == access.REVIEW and due_date <= datetime.date.today()) :
             stats[STAT_DUE] += 1
         stats[STAT_REACHABLE] += 1
 
@@ -79,7 +80,7 @@ def total_training_positions(node) :
 # Returns a triple of statistics for the given item: the number
 # of positions waiting; of positions learned; and positions in total.
 def item_stats(filepath) :
-    item = items.load_item(filepath)
+    item = access.load_item(filepath)
     stats = training_stats(item)
     waiting = stats[STAT_NEW] + stats[STAT_FIRST_STEP]
     waiting += stats[STAT_SECOND_STEP] + stats[STAT_DUE]
@@ -92,7 +93,7 @@ def item_stats(filepath) :
 # Returns the training_stats() list with the total number of
 # positions appended.
 def item_stats_full(filepath) :
-    item = items.load_item(filepath)    
+    item = access.load_item(filepath)    
     return training_stats(item) + [total_training_positions(item)]
 
 # category_stats()

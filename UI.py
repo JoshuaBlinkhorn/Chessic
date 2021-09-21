@@ -1,21 +1,24 @@
+# MODULE UI.py
+# this file is part of Opening Trainer by Joshua Blinkhorn
+
+# SYNOPSIS
+# Provides the user interface.
+# This is a command line interface consisting largely of menus
+# navigated by typed commands.
+
 import os
+import stats
+
 import chess
 import chess.pgn
-
 import time
 import pickle
 import datetime
 import time
 import shutil
 
-import stats
-import access
-
 from graphics import print_board, clear
 from training import TrainingData, MetaData, play_card, handle_card_result, generate_training_queue
-
-
-# import UI
 
 def main_menu(dirpath):
     command = ""
@@ -540,7 +543,3 @@ def is_valid_uci(string,board) :
             return True
     return False
     
-
-repertoires_path = "Repertoires"
-main_menu(repertoires_path)
-

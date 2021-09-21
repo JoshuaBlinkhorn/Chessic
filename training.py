@@ -7,7 +7,7 @@ import datetime
 import chess
 import random
 from graphics import print_board, clear
-from items import save_item, load_item, NEW, FIRST_STEP, SECOND_STEP, REVIEW, INACTIVE
+from access import save_item, load_item, NEW, FIRST_STEP, SECOND_STEP, REVIEW, INACTIVE
 
 NEW = 0
 FIRST_STEP = 1
