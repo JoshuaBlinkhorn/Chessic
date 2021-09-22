@@ -1,4 +1,4 @@
-# MODULE training.py
+# MODULE trainer.py
 # this file is part of Opening Trainer by Joshua Blinkhorn
 
 # SYNOPSIS
@@ -186,4 +186,27 @@ def generate_training_queue(node,board) :
 
     return queue
 
+def train(variation_path):
+    repertoire = access.load_item(variation_path)
+    player = repertoire.meta.player
+    board = repertoire.board()
+    node = repertoire        
+
+    # generate queue
+    queue = generate_training_queue(repertoire,board)
+    # play queue
+
+    command = ""
+    while(len(queue) != 0) :
+        card = queue.pop(0)
+        counts = stats.training_stats(repertoire)
+        clear()
+        print(f"{counts[0]} {counts[1]} {counts[2]} {counts[5]}")
+        result = play_card(card,repertoire)
+        if (result == "CLOSE") :
+            break
+        handle_card_result(result,card,queue,repertoire)
+
+    # save and quit trainer
+    access.save_item(variation_path, repertoire)
 
