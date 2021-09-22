@@ -5,62 +5,134 @@
 # Provides the functionality for managing a PGN item.
 
 import datetime
-# import training
+from training import TrainingData, MetaData
 import access
 import os
 import chess
 
 from graphics import print_board, clear
 
+def represents_int(string):
+    try: 
+        int(string)
+        return True
+    except ValueError:
+        return False
+
+
 # user management of repertoire as a pgn
-def manage(variation_path):
-    repertoire = access.load_item(variation_path)
-    player = repertoire.meta.player
-    board = repertoire.board()
-    node = repertoire        
+def manage(filepath):
+    root = access.load_item(filepath)
+    player = root.meta.player
+    board = root.board()
+    node = root        
 
     command = ""
     while(command != "c") :
 
         clear()
-        print_node_overview(node,player,board)
-        print_node_options(node)
+        print_turn(board)
+        print_board(board,player)
+        print_moves(node)
+        print_options(node)
+        # node, board, command = prompt(node, board)
+
         command = input("\n:")
+    
         if (command == "b" and node.parent != None) :
             node = node.parent
             board.pop()
+            
         elif (command == "d" and len(node.variations) != 0) :
             delete_move(node,board)
             
         elif (command == "p" and len(node.variations) > 1) :
             promote_move(node,board)
+
+        elif (represents_int(command) and
+              1 <= int(command) <= len(node.variations)) :
+            variation = int(command) - 1
+            node = node.variations[variation]
+            board = node.board()
             
         elif (is_valid_uci(command,board)) :
             move = chess.Move.from_uci(command)
-            if (not node.has_variation(move)) :
+            if (node.has_variation(move)) :
+                print("\n Move already exists.")
+                print("Hit [Enter] to continue :.")                
+            else :
                 add_move(node,move)
-            node = node.variation(move)
-            board.push(move)
+                node = node.variation(move)
+                board.push(move)
 
-    #threshold = compute_learning_threshold(repertoire)
-    access.save_item(variation_path, repertoire)    
-    clear()
+    access.save_item(filepath, root)    
 
-def print_node_overview(node,player,board) :
-    print_turn(board)
-    print_board(board,player)
-    print_moves(node)
-
-def print_node_options(node) :
+def print_turn(board) :
     print("")
-    if (node.parent != None) :
-        print("'b' back")
+    if (board.turn) :
+        print("WHITE to play.\n")
+    else :
+        print("BLACK to play.\n")
+
+# prints repertoire moves for the given node
+def print_moves(node) :
+    if (node.player_to_move) :
+        if (node.is_end()) :
+            print("No solutions.")
+        else :
+            print("Solutions:")
+            for index, solution in enumerate(node.variations) :
+                print(str(index + 1).ljust(3) + solution.move.uci())
+    else :
+        if (node.is_end()) :
+            print("No problems.")
+        else :
+            print("Problems:")
+            for index, problem in enumerate(node.variations) :
+                print(str(index + 1).ljust(3) + problem.move.uci())
+    print("")
+    
+def print_options(node) :
+    print ("<move> add move")
     if (not node.is_end()) :
+        print ("<ID> play move")            
         print("'d' delete")
     if (len(node.variations) > 1) :
         print("'p' promote")
+    if (node.parent != None) :
+        print("'b' back")
     print ("'c' close")
-    print ("<move> enter move")
+
+def prompt(node, board) :
+    command = input("\n:")
+    
+    if (command == "b" and node.parent != None) :
+        node = node.parent
+        board.pop()
+            
+    elif (command == "d" and len(node.variations) != 0) :
+        delete_move(node,board)
+            
+    elif (command == "p" and len(node.variations) > 1) :
+        promote_move(node,board)
+
+    elif (represents_int(command) and
+          1 <= int(command) <= len(node.variations)) :
+        variation = int(command) - 1
+        node = node.variations[variation]
+        board = node.board()
+            
+    elif (is_valid_uci(command,board)) :
+        move = chess.Move.from_uci(command)
+        if (node.has_variation(move)) :
+            print("\n Move already exists.")
+            print("Hit [Enter] to continue :.")                
+        else :
+            add_move(node,move)
+            node = node.variation(move)
+            board.push(move)
+
+    return node, board, command
 
 def delete_move(node,board) :
     command = input("delete move:")
@@ -93,31 +165,6 @@ def is_valid_uci(string,board) :
             return True
     return False
         
-# prints the side to move
-def print_turn(board) :
-    print("")
-    if (board.turn) :
-        print("WHITE to play.")
-    else :
-        print("BLACK to play.")
-
-# prints repertoire moves for the given node
-def print_moves(node) :
-    if (node.player_to_move) :
-        if (node.is_end()) :
-            print("\nNo solutions.")
-        else :
-            print("\nSolutions:")
-            for solution in node.variations :
-                print(solution.move.uci())
-    else :
-        if (node.is_end()) :
-            print("\nNo problems.")
-        else :
-            print("\nProblems:")
-            for problem in node.variations :
-                print(problem.move.uci())
-
 # creates an empty repertoire for a new variation
 
 def new_item(dirpath) :
@@ -138,7 +185,7 @@ def new_item(colour, opening) :
     name = input("\nName:")
     while (os.path.exists(rpt_path(name))) :
         name = input("That name is taken.\nChoose another:")
-    variation_path = opening_path + "/" + name + ".rpt"
+    filepath = opening_path + "/" + name + ".rpt"
         
     # create the repertoire
     repertoire = chess.pgn.Game()
@@ -146,7 +193,7 @@ def new_item(colour, opening) :
     repertoire.meta = MetaData(name, player)
     repertoire.training = False
     repertoire.player_to_move = player == board.turn
-    access.save_item(variation_path, repertoire)
+    access.save_item(filepath, repertoire)
 """
 
 # TODO - rewrite this function into the current style
