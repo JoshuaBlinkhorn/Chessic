@@ -5,7 +5,9 @@
 
 import datetime
 import chess
+import chess.pgn
 import random
+import copy
 
 import access
 import stats
@@ -45,48 +47,39 @@ def train(filepath):
     player = root.meta.player
     board = root.board()
     node = root        
-    queue = generate_training_queue(root, board)
+    queue = generate_training_queue(root)
     play_queue(queue, root, filepath)
 
 def play_queue(queue, root, filepath) :
     while(len(queue) != 0) :
-        card = queue.pop(0)
-        result = play_card(card, root, filepath)
+        node = queue.pop(0)
+        result = play_position(node, filepath)
         if (result == PAUSE) :
             return 
-        handle_card_result(result,card,queue,root)
+        handle_result(result, node, queue)
         access.save_item(filepath, root)
-    
-        
-def play_card(card, root, filepath) :
-    front = card[PROBLEM].variations[0]
-    back = front.variations[0]
-    node = card[NODE]
+            
+def play_position(node, filepath) :
+    problem = copy.copy(node.parent)
+    solution = copy.copy(node)
     status = node.training.status
-    player = root.meta.player
-    if (card_front(filepath,node,front.board(),player) == PAUSE) :
+    player = node.game().meta.player
+    if (pose_problem(filepath, problem) == PAUSE) :
         return PAUSE
-    return card_back(node, back.board(), player)
+    return show_solution(solution)
 
-def card_front(filepath, node, board, player) :
+def pose_problem(filepath, problem) :
     result = False
     while (result == False) :
-        card_title(filepath)
-        card_info(filepath, node)
-        print_board(board,player)
-        front_options()
-        result = front_prompt()
+        problem_title(filepath)
+        problem_info(filepath, problem)
+        #print_board(problem.board(), not problem.turn())
+        print_board(problem.board(), True)        
+        problem_options()
+        result = problem_prompt()
     return result
 
-def card_back(node, board, player) :
-    result = False
-    while(result == False) :
-        print_board(board,player)
-        back_options(node)
-        result = back_prompt(node)
-    return result
-
-def card_title(filepath) :
+def problem_title(filepath) :
     clear()
     width = 18
     name = paths.item_name(filepath)
@@ -95,15 +88,16 @@ def card_title(filepath) :
     print("COLLECTION".ljust(width)+paths.collection_name(filepath))
     print("")
 
-def card_info(filepath, node) :
-    string = status_string(node)
+def problem_info(filepath, problem) :
+    string = status_string(problem)
     string += remaining_string(filepath)
     string += "\n\n\n"
     print(string)
 
-def status_string(node) :
+def status_string(problem) :
     width = 18
-    status = node.training.status    
+    solution = problem.variations[0]
+    status = solution.training.status
     if (status == NEW) :
         string = "NEW".ljust(width)
     elif (status == FIRST_STEP or status == SECOND_STEP) :
@@ -120,11 +114,11 @@ def remaining_string(filepath) :
     due = str(info[stats.STAT_DUE]) 
     return new + " | " + learn + " | " + due
     
-def front_options() :
+def problem_options() :
     print("\n\n<Enter> show solution")
     print("'p' pause session")
 
-def front_prompt() :
+def problem_prompt() :
     command = input("\n:")
     clear()
     if (command == "p") :
@@ -134,8 +128,17 @@ def front_prompt() :
     else :
         return False
 
-def back_options(node) :
-    status = node.training.status
+def show_solution(solution) :
+    result = False
+    while(result == False) :
+        #print_board(solution.board(),solution.turn())
+        print_board(solution.board(),True)        
+        solution_options(solution)
+        result = solution_prompt(solution)
+    return result
+    
+def solution_options(solution) :
+    status = solution.training.status
     if (status == NEW) :
         print("\n\n\n<enter> continue\n")
     else :
@@ -143,8 +146,8 @@ def back_options(node) :
         print("<enter>  okay")
         print("'h'      hard\n")
 
-def back_prompt(node) :
-    status = node.training.status
+def solution_prompt(solution) :
+    status = solution.training.status
     command = input(":")
     clear()
     if (status == NEW) :
@@ -162,28 +165,24 @@ def back_prompt(node) :
         else :
             return False
 
-def generate_training_queue(node,board) :
+def generate_training_queue(node) :
     # the board must be returned as it was given
     queue = []    
     if (node.training) :
-        handle_training_node(node, board, queue)
+        handle_training_node(node, queue)
     # recursive part
     if (not node.is_end()) :
         if (node.player_to_move) :
             # search only the main variation
             child = node.variations[0]
-            board.push(child.move)
-            queue += generate_training_queue(child,board)
-            board.pop()
+            queue += generate_training_queue(child)
         else :
             # search all variations
             for child in node.variations :
-                board.push(child.move)
-                queue += generate_training_queue(child,board)
-                board.pop()
+                queue += generate_training_queue(child)
     return queue
 
-def handle_training_node(node, board, queue) :
+def handle_training_node(node, queue) :
     status = node.training.status
     due_date = node.training.due_date
     today = datetime.date.today()
@@ -192,8 +191,10 @@ def handle_training_node(node, board, queue) :
         status == SECOND_STEP or
         (status == REVIEW and due_date <= today)) :
         # add a card to the queue
-        add_card(node, board, queue)
+        queue.append(node)
+        #add_card(node, board, queue)
 
+"""        
 def add_card(node, board, queue) :
     solution = board.pop()
     problem = board.pop()
@@ -204,23 +205,22 @@ def add_card(node, board, queue) :
     board.push(problem)
     board.push(solution)
     queue.append([game,node])
-        
-def handle_card_result(result, card, queue, root) :
-    problem = card[PROBLEM]
-    node = card[NODE]
-    status = node.training.status
-    
+"""
+
+def handle_result(result, node, queue) :
+    status = node.training.status    
+    root = node.game()
     if (status == NEW) :
-        reinsert_card(FIRST_STEP, card, queue)
+        requeue(node, queue, FIRST_STEP)
                     
     elif (status == FIRST_STEP) :
         if (result == EASY) :
             schedule(node, result)
             root.meta.learning_data[1] += 1
         elif (result == OKAY) :
-            reinsert_card(SECOND_STEP, card, queue)
+            requeue(node, queue, SECOND_STEP)
         elif (result == HARD) :
-            reinsert_card(FIRST_STEP, card, queue)            
+            requeue(node, queue, FIRST_STEP)            
 
     elif (status == SECOND_STEP) :
         if (result == EASY) :
@@ -230,7 +230,7 @@ def handle_card_result(result, card, queue, root) :
             schedule(node, result)
             root.meta.learning_data[1] += 1
         elif (result == HARD) :
-            reinsert_card(FIRST_STEP, card, queue)
+            requeue(node, queue, FIRST_STEP)
             
     elif (status == REVIEW) :
         if (result == EASY) :
@@ -238,7 +238,7 @@ def handle_card_result(result, card, queue, root) :
         elif (result == OKAY) :
             schedule(node, result)
         elif (result == HARD) :
-            reinsert_card(FIRST_STEP, card, queue)
+            requeue(node, queue, FIRST_STEP)
             root.meta.learning_data[1] -= 1
 
 def schedule(node, result) :
@@ -267,16 +267,15 @@ def new_due_date(node, result, today) :
     wait = int(gap * (multiplier + random.random()))
     return today + datetime.timedelta(days = wait)    
     
-def reinsert_card(new_status, card, queue) :
-    node = card[NODE]
+def requeue(node, queue, new_status) :
     node.training.status = new_status
-    offset_low = 1
-    offset_high = 4
-    random_offset = get_offset(offset_low, offset_high)
-    offset = min(random_offset,len(queue))
-    queue.insert(offset,card)
+    low_limit = 1
+    high_limit = 4
+    rand = random_offset(low_limit, high_limit)
+    offset = min(rand, len(queue))
+    queue.insert(offset,node)
 
-def get_offset(lower_bound, upper_bound) :
+def random_offset(lower_bound, upper_bound) :
     interval_width = upper_bound - lower_bound + 1
     offset = int(interval_width * random.random())
     return lower_bound + offset
