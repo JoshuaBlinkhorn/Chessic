@@ -134,10 +134,10 @@ def add_move(node, board, command) :
         node = node.variation(move)
     return node
     
-def add_node(node,move) :
+def add_node(node, move) :
     new_node = node.add_variation(move)
-    new_node.player_to_move = not node.player_to_move
-    if (node.parent == None or new_node.player_to_move) :
+    new_node.player_to_move = not node.player_to_move    
+    if (new_node.player_to_move) :
         new_node.training = False        
     else :
         new_node.training = TrainingData()

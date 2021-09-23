@@ -73,8 +73,7 @@ def pose_problem(filepath, problem) :
     while (result == False) :
         problem_title(filepath)
         problem_info(filepath, problem)
-        #print_board(problem.board(), not problem.turn())
-        print_board(problem.board(), True)        
+        print_board(problem.board(), problem.game().meta.player)
         problem_options()
         result = problem_prompt()
     return result
@@ -131,8 +130,7 @@ def problem_prompt() :
 def show_solution(solution) :
     result = False
     while(result == False) :
-        #print_board(solution.board(),solution.turn())
-        print_board(solution.board(),True)        
+        print_board(solution.board(), solution.game().meta.player)
         solution_options(solution)
         result = solution_prompt(solution)
     return result
@@ -193,19 +191,6 @@ def handle_training_node(node, queue) :
         # add a card to the queue
         queue.append(node)
         #add_card(node, board, queue)
-
-"""        
-def add_card(node, board, queue) :
-    solution = board.pop()
-    problem = board.pop()
-    game = chess.pgn.Game()
-    game.setup(board)
-    new_node = game.add_variation(problem)
-    new_node = new_node.add_variation(solution)
-    board.push(problem)
-    board.push(solution)
-    queue.append([game,node])
-"""
 
 def handle_result(result, node, queue) :
     status = node.training.status    

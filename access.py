@@ -33,15 +33,15 @@ def update(repertoire) :
     if (learning_date < today) :
         repertoire.meta.learning_data[0] = today
         repertoire.meta.learning_data[1] = 0
-        normalise(repertoire,max_value)
+        set_statuses(repertoire,max_value)
     else :
-        learning_threshold = max_value - learning_value
-        normalise(repertoire,learning_threshold)
+        num_remaining = max_value - learning_value
+        set_statuses(repertoire, num_remaining)
 
-def normalise(node,threshold) :
+def set_statuses(node, num_remaining) :
     # configure training data
     if (node.training) :
-        if (threshold <= 0) :
+        if (num_remaining <= 0) :
             for status in [NEW,FIRST_STEP,SECOND_STEP] :
                 if (node.training.status == status) :
                     node.training.status = INACTIVE
@@ -50,14 +50,16 @@ def normalise(node,threshold) :
                 node.training.status = NEW
             for status in [NEW,FIRST_STEP,SECOND_STEP] :
                 if (node.training.status == status) :
-                    threshold -= 1
+                    num_remaining -= 1
 
     if (not node.is_end()) :
         if (node.player_to_move) : # call all children recursively
-            threshold = normalise(node.variations[0],threshold)
+            num_remaining = set_statuses(node.variations[0],
+                                         num_remaining)
         else : # call only the main variation
             for child in node.variations :
-                threshold = normalise(child,threshold)
+                num_remaining = set_statuses(child,
+                                             num_remaining)
                 
-    return threshold
+    return num_remaining
 
