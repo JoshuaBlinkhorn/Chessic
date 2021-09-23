@@ -3,7 +3,9 @@ import shutil
 
 import stats
 import manager
-from graphics import print_board, clear
+import paths
+from graphics import clear
+import training
 from training import TrainingData, MetaData
 
 MAIN = 0
@@ -17,18 +19,6 @@ def represents_int(string):
         return True
     except ValueError:
         return False
-
-def item_name(filepath) :
-    path = filepath.split('/')
-    return path[3][:-4]
-
-def category_name(filepath) :
-    path = filepath.split('/')
-    return path[2]
-
-def collection_name(filepath) :
-    path = filepath.split('/')
-    return path[1]
 
 def header_row() :
     string = "ID".ljust(3) + "COV.".ljust(5)
@@ -63,14 +53,18 @@ def options(names) :
 
 def new(dirpath, asset) :    
     name = input("Name: ")
-    new_path = dirpath + "/" + name
-    while (os.path.exists(new_path)) :
-        name = input("That name is taken.\nChoose another: ")
+    while (True) :
         new_path = dirpath + "/" + name
+        if (asset == ITEM) :
+            new_path += '.rpt'
+        if (not os.path.exists(new_path)) :
+            break
+        name = input("That name is taken.\nChoose another: ")        
+    
     if (asset != ITEM) :
         os.mkdir(new_path)
     else :
-        manager.new_item(dirpath)
+        manager.new_item(new_path)
         
 def delete(dirpath, names, asset) :
     command = input("ID to delete: ")
@@ -79,7 +73,7 @@ def delete(dirpath, names, asset) :
         index = int(command) - 1
         name = names[index]
         print (f"You are about to permanently delete `{name}'.")
-        check = input("Are you sure? :")
+        check = input("Are you sure? (y/n):")
         if (check == "y") :
             path = dirpath + "/" + name
             if (asset == ITEM) :
@@ -102,10 +96,10 @@ def title(dirpath, asset) :
     if (asset == MAIN) :
         print("YOUR COLLECTIONS")
     elif (asset == COLLECTION) :
-        print("COLLECTION " + collection_name(dirpath))
+        print("COLLECTION " + paths.collection_name(dirpath))
     elif (asset == CATEGORY) :
-        print("CATEGORY   " + category_name(dirpath))
-        print("COLLECTION " + collection_name(dirpath))
+        print("CATEGORY   " + paths.category_name(dirpath))
+        print("COLLECTION " + paths.collection_name(dirpath))
     print("")
 
 def table(dirpath, names, asset) :
@@ -174,7 +168,7 @@ def item_menu(filepath) :
         if (command == "m") :
             manager.manage(filepath)
         elif (command == "t") :
-            train(filepath)
+            training.train(filepath)
 
 def item_header(filepath, info) :
     width = 14
@@ -184,9 +178,9 @@ def item_header(filepath, info) :
         status_msg = "training available"
     else :
         status_msg = "up to date"    
-    print("ITEM".ljust(width) + item_name(filepath))
-    print("CATEGORY".ljust(width) + category_name(filepath))
-    print("COLLECTION".ljust(width) + collection_name(filepath))
+    print("ITEM".ljust(width) + paths.item_name(filepath))
+    print("CATEGORY".ljust(width) + paths.category_name(filepath))
+    print("COLLECTION".ljust(width) +paths.collection_name(filepath))
     print("STATUS".ljust(width) + status_msg)
 
 

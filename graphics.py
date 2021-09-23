@@ -73,7 +73,7 @@ def flip(board_string) :
 # Produces the coloured string for the given row of the board.
 def row_string(row, board_string) :
     board_width = 8
-    print_string = ""
+    print_string = "    "
     for column in range(board_width) :
         char_index = (row * board_width) + column
         char = board_string[char_index]
