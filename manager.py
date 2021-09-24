@@ -8,9 +8,8 @@ import datetime
 import chess
 import os
 
-import access
+import tree
 import paths
-from training import TrainingData, MetaData
 from graphics import print_board, clear
 
 def represents_int(string):
@@ -21,23 +20,21 @@ def represents_int(string):
         return False
 
 def manage(filepath):
-    root = access.load_item(filepath)
-    player = root.meta.player
+    root = tree.load(filepath)
+    colour = root.meta.colour
     board = root.board()
-    node = root        
+    node = root       
 
     command = ""
     while(command != "c") :
 
         clear()
         print_turn(board)
-        print_board(board,player)
+        print_board(board,colour)
         print_moves(node, board)
         print_options(node)
-        node, command = prompt(node, board)
-
-    access.save_item(filepath, root)    
-
+        node, command = prompt(node, board, filepath)
+                
 def print_turn(board) :
     print("")
     if (board.turn) :
@@ -47,7 +44,7 @@ def print_turn(board) :
 
 # prints repertoire moves for the given node
 def print_moves(node, board) :
-    if (node.player_to_move) :
+    if (tree.is_problem(node)) :
         if (node.is_end()) :
             print("No solutions.")
         else :
@@ -76,12 +73,12 @@ def print_options(node) :
         print("'b' back")
     print ("'c' close")
 
-def prompt(node, board) :
+def prompt(node, board, filepath) :
     command = input("\n:")    
-    if (command == "b" and node.parent != None) :
-        node = pop_move(node,board)
+    if (command == "b" and not tree.is_root(node)) :
+        node = pop_move(node, board)
     elif (command == "d" and len(node.variations) != 0) :
-        delete_move(node,board)            
+        delete_move(node, board, filepath)            
     elif (command == "p" and len(node.variations) > 1) :
         promote_move(node,board)
     elif (represents_int(command) and
@@ -89,14 +86,14 @@ def prompt(node, board) :
         node = play_move(node, board, int(command) - 1)
     elif (is_valid_uci(command, board) or
           is_valid_san(command, board)) :
-        node = add_move(node, board, command)
+        node = add_move(node, board, command, filepath)
     return node, command
 
 def pop_move(node, board) :
     board.pop()
     return node.parent
 
-def delete_move(node,board) :
+def delete_move(node, board, filepath) :
     command = input("ID to delete: ")
     if (represents_int(command) and
         1 <= int(command) <= len(node.variations)) :
@@ -107,7 +104,9 @@ def delete_move(node,board) :
         command = input("Are you sure? (y/n): ")
         if (command == "y") :
             node.remove_variation(variation)
-
+            tree.update_statuses(node.game())
+            tree.save(filepath, node.game())            
+            
 def promote_move(node,board) :
     command = input("ID to promote: ")
     if (represents_int(command) and
@@ -120,7 +119,7 @@ def play_move(node, board, variation_index) :
     board.push(node.move)
     return node    
 
-def add_move(node, board, command) :
+def add_move(node, board, command, filepath) :
     if (is_valid_uci(command, board)) :
         move = chess.Move.from_uci(command)
     else :
@@ -129,19 +128,13 @@ def add_move(node, board, command) :
         print("\nMove already exists.")
         input("Hit [Enter] to continue :")
     else :
-        add_node(node,move)
+        tree.add_child(node, move)
+        tree.update_statuses(node.game())
+        tree.save(filepath, node.game())            
         board.push(move)        
         node = node.variation(move)
     return node
     
-def add_node(node, move) :
-    new_node = node.add_variation(move)
-    new_node.player_to_move = not node.player_to_move    
-    if (new_node.player_to_move) :
-        new_node.training = False        
-    else :
-        new_node.training = TrainingData()
-
 def is_valid_uci(string,board) :
     for move in board.legal_moves :
         if (string == move.uci()) :
@@ -156,8 +149,8 @@ def is_valid_san(string,board) :
 
 def new_item(filepath) :    
     colour = select_colour(filepath)
-    position = select_position(filepath, colour)
-    create_item(filepath, position, colour)
+    board = select_position(filepath, colour)
+    tree.create(filepath, board, colour)
     
 def new_item_title(filepath) :
     clear()
@@ -178,15 +171,6 @@ def select_colour(filepath) :
         return True
     else :
         return False
-
-def create_item(filepath, position, colour) :
-    root = chess.pgn.Game()
-    root.setup(position)
-    root.meta = MetaData("Meta-name-is-deprecated", colour)
-    root.training = False
-    root.player_to_move = (colour == position.turn)
-    access.save_item(filepath, root)
-
     
 # prompts user to choose starting position
 def select_position(filepath, colour) :

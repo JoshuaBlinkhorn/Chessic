@@ -5,8 +5,8 @@
 # Provides functions calculating statistics.
 
 import datetime
-import training
-import access
+import trainer
+import tree
 import os
 
 STAT_NEW = 0
@@ -30,26 +30,27 @@ STAT_SIZE = 2
 # number of positions reachable.
 def training_stats(node) :
     stats = [0,0,0,0,0,0,0]
-    if (node.training) :
+    if (tree.is_solution(node)) :
         status = node.training.status
-        due_date = node.training.due_date
-        if (status == training.NEW) :
+        due_date = node.training.due
+        if (status == tree.Status.NEW) :
             stats[STAT_NEW] += 1
-        elif (status == access.FIRST_STEP) :
+        elif (status == tree.Status.FIRST_STEP) :
             stats[STAT_FIRST_STEP] += 1            
-        elif (status == access.SECOND_STEP) :
+        elif (status == tree.Status.SECOND_STEP) :
             stats[STAT_SECOND_STEP] += 1            
-        elif (status == access.REVIEW) :
+        elif (status == tree.Status.REVIEW) :
             stats[STAT_REVIEW] += 1            
-        elif (status == access.INACTIVE) :
+        elif (status == tree.Status.INACTIVE) :
             stats[STAT_INACTIVE] += 1            
-        if (status == access.REVIEW and due_date <= datetime.date.today()) :
+        if (status == tree.Status.REVIEW and
+            due_date <= datetime.date.today()) :
             stats[STAT_DUE] += 1
         stats[STAT_REACHABLE] += 1
 
     # recursive part
     if (not node.is_end()) :
-        if (node.player_to_move) :
+        if (tree.is_problem(node)) :
             # search only the main variation
             child_stats = training_stats(node.variations[0])
             for index in range(len(stats)) :
@@ -66,7 +67,7 @@ def training_stats(node) :
 # total_training_positions()
 # Should be called on the root node of a PGN.
 def total_training_positions(node) :
-    if (node.training) :
+    if (tree.is_solution(node)) :
         count = 1
     else :
         count = 0
@@ -80,8 +81,8 @@ def total_training_positions(node) :
 # Returns a triple of statistics for the given item: the number
 # of positions waiting; of positions learned; and positions in total.
 def item_stats(filepath) :
-    item = access.load_item(filepath)
-    stats = training_stats(item)
+    root = tree.load(filepath)
+    stats = training_stats(root)
     waiting = stats[STAT_NEW] + stats[STAT_FIRST_STEP]
     waiting += stats[STAT_SECOND_STEP] + stats[STAT_DUE]
     learned = stats[STAT_REVIEW]
@@ -93,8 +94,8 @@ def item_stats(filepath) :
 # Returns the training_stats() list with the total number of
 # positions appended.
 def item_stats_full(filepath) :
-    item = access.load_item(filepath)    
-    return training_stats(item) + [total_training_positions(item)]
+    root = tree.load(filepath)    
+    return training_stats(root) + [total_training_positions(root)]
 
 # category_stats()
 # Returns compact statistics for the given category.

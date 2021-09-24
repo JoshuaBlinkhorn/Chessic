@@ -5,8 +5,7 @@ import stats
 import manager
 import paths
 from graphics import clear
-import training
-from training import TrainingData, MetaData
+import trainer
 
 MAIN = 0
 COLLECTION = 1
@@ -161,16 +160,16 @@ def item_menu(filepath) :
         if (command == "m") :
             manager.manage(filepath)
         elif (command == "t") :
-            training.train(filepath)
+            trainer.train(filepath)
 
 def item_header(filepath, info) :
     width = 14
     waiting = info[stats.STAT_NEW] + info[stats.STAT_FIRST_STEP]
     waiting += info[stats.STAT_SECOND_STEP] + info[stats.STAT_DUE]  
     if (waiting > 0) :
-        status_msg = "training available"
+        status_msg = "Training available"
     else :
-        status_msg = "up to date"    
+        status_msg = "Up to date"    
     print("ITEM".ljust(width) + paths.item_name(filepath))
     print("CATEGORY".ljust(width) + paths.category_name(filepath))
     print("COLLECTION".ljust(width) +paths.collection_name(filepath))
