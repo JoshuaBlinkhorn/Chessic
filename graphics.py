@@ -1,5 +1,23 @@
+"""
+Copyright Joshua Blinkhorn 2021
+
+This file is part of Chessic.
+
+Chessic is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Chessic is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 # MODULE graphics.py
-# this file is part of Opening Trainer by Joshua Blinkhorn
 
 # SYNOPSIS 
 # This module implements a basic graphical chess board.
@@ -62,8 +80,8 @@ def flip(board_string) :
                         39,38,37,36,35,34,33,32,
                         31,30,29,28,27,26,25,24,
                         23,22,21,20,19,18,17,16,
-                        15,14,13,12,11,10,9,8,7,
-                        6,5,4,3,2,1,0]
+                        15,14,13,12,11,10,9,8,
+                        7,6,5,4,3,2,1,0]
     new_string = board_string.copy()
     for index in range(64) :
         new_string[index] = board_string[flip_permutation[index]]

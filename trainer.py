@@ -1,7 +1,26 @@
+"""
+Copyright Joshua Blinkhorn 2021
+
+This file is part of Chessic.
+
+Chessic is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Chessic is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 # MODULE trainer.py
-# this file is part of Opening Trainer by Joshua Blinkhorn
 
 # SYNOPSIS
+# Provides the interface and implementation of the training module.
 
 import datetime
 import chess
@@ -144,7 +163,7 @@ def generate_queue(node) :
     if (tree.is_solution(node)) :
         handle_solution(node, queue)
     if (not node.is_end()) :
-        if (tree.is_problem(node)) :
+        if (tree.is_solution(node.variations[0])) :
             child = node.variations[0]
             queue += generate_queue(child)
         else :
@@ -223,11 +242,9 @@ def new_due_date(node, result, today) :
     
 def requeue(node, queue, new_status) :
     node.training.status = new_status
-    low_limit = 1
-    high_limit = 4
-    rand = random_offset(low_limit, high_limit)
-    offset = min(rand, len(queue))
-    queue.insert(offset,node)
+    low_limit = min(1, len(queue))
+    high_limit = min(4, len(queue))
+    queue.insert(random_offset(low_limit, high_limit), node)
 
 def random_offset(lower_bound, upper_bound) :
     interval_width = upper_bound - lower_bound + 1

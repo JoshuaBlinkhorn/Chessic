@@ -1,5 +1,23 @@
-# MODULE STATS.py
-# this file is part of Opening Trainer by Joshua Blinkhorn
+"""
+Copyright Joshua Blinkhorn 2021
+
+This file is part of Chessic.
+
+Chessic is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Chessic is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+# MODULE stats.py
 
 # SYNOPSIS
 # Provides functions calculating statistics.
@@ -50,7 +68,7 @@ def training_stats(node) :
 
     # recursive part
     if (not node.is_end()) :
-        if (tree.is_problem(node)) :
+        if (tree.is_solution(node.variations[0])) :
             # search only the main variation
             child_stats = training_stats(node.variations[0])
             for index in range(len(stats)) :
@@ -61,7 +79,6 @@ def training_stats(node) :
                 child_stats = training_stats(child)
                 for index in range(len(stats)) :
                     stats[index] += child_stats[index]
-
     return stats
 
 # total_training_positions()
