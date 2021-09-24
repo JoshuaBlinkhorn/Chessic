@@ -17,7 +17,10 @@ You should have received a copy of the GNU General Public License
 along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# Chessic v1.0
 # convert_pgn.py
+
+# SYNOPSIS
 # An ad hoc script that converts a PGN file into a Chessic tree.
 
 import os

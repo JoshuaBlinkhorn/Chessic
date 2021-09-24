@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# Chessic v1.0
 # MODULE trainer.py
 
 # SYNOPSIS
