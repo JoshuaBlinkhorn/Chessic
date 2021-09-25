@@ -21,7 +21,9 @@ along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
 # MODULE manager.py
 
 # SYNOPSIS
-# Provides the functionality for managing a PGN item.
+# Provides the functionality for managing a tree.
+# Typically only the functions manage() and new_tree() will
+# need to be imported.
 
 import datetime
 import chess
@@ -31,6 +33,8 @@ import tree
 import paths
 from graphics import print_board, clear
 
+# represents_int()
+# Determines whether a string represents an integer.
 def represents_int(string):
     try: 
         int(string)
@@ -38,6 +42,8 @@ def represents_int(string):
     except ValueError:
         return False
 
+# manage()
+# Launches the dialogue for tree management.
 def manage(filepath):
     root = tree.load(filepath)
     colour = root.meta.colour
@@ -46,14 +52,15 @@ def manage(filepath):
 
     command = ""
     while(command != "c") :
-
         clear()
         print_turn(board)
         print_board(board,colour)
         print_moves(node, board)
         print_options(node)
         node, command = prompt(node, board, filepath)
-                
+
+# print_turn()
+# Prints the player to move in the board position.
 def print_turn(board) :
     print("")
     if (board.turn) :
@@ -61,7 +68,8 @@ def print_turn(board) :
     else :
         print("BLACK to play.\n")
 
-# prints repertoire moves for the given node
+# print_moves()        
+# Prints moves of the variations of the given node.
 def print_moves(node, board) :
     if (tree.is_raw_problem(node)) :
         if (node.is_end()) :
@@ -80,7 +88,9 @@ def print_moves(node, board) :
                 san = board.san(problem.move)                
                 print(str(index + 1).ljust(3) + san)
     print("")
-    
+
+# print_options()
+# Prints the user options for the given node.
 def print_options(node) :
     print ("<move> add move")
     if (not node.is_end()) :
@@ -92,6 +102,8 @@ def print_options(node) :
         print("'b' back")
     print ("'c' close")
 
+# prompt()
+# Handles the user prompt at the bottom of the management dialogue.
 def prompt(node, board, filepath) :
     command = input("\n:")
     if (command == "b" and not tree.is_root(node)) :
@@ -108,10 +120,17 @@ def prompt(node, board, filepath) :
         node = add_move(node, board, command, filepath)
     return node, command
 
+# pop_move()
+# Removes the current move from the stack.
 def pop_move(node, board) :
     board.pop()
     return node.parent
 
+# delete_move()
+# Deletes a move from the tree.
+# Statuses are updated and the tree is saved. This is best done
+# here, not at the end of manage(), because updating statuses
+# should be avoided when the tree is not modified.
 def delete_move(node, board, filepath) :
     command = input("ID to delete: ")
     if (represents_int(command) and
@@ -125,7 +144,9 @@ def delete_move(node, board, filepath) :
             node.remove_variation(variation)
             tree.update_statuses(node.game())
             tree.save(filepath, node.game())            
-            
+
+# promote_move()
+# Promotes a move to the main variation. 
 def promote_move(node,board) :
     command = input("ID to promote: ")
     if (represents_int(command) and
@@ -133,11 +154,18 @@ def promote_move(node,board) :
         index = int(command) - 1
         node.promote_to_main(node.variations[index])
 
+# play_move()
+# Moves to the node reached by the given move.
 def play_move(node, board, variation_index) :
     node = node.variations[variation_index]
     board.push(node.move)
     return node    
 
+# add_move()
+# Adds a move to the tree.
+# Statuses are updated and the tree is saved. This is best done
+# here, not at the end of manage(), because updating statuses
+# should be avoided when the tree is not modified.
 def add_move(node, board, command, filepath) :
     if (is_valid_uci(command, board)) :
         move = chess.Move.from_uci(command)
@@ -153,25 +181,35 @@ def add_move(node, board, command, filepath) :
         board.push(move)        
         node = node.variation(move)
     return node
-    
-def is_valid_uci(string,board) :
+
+# is_valid_uci()
+# Determines whether a string represents a move in the context
+# of the board, specified in UCI notation.
+def is_valid_uci(string, board) :
     for move in board.legal_moves :
         if (string == move.uci()) :
             return True
     return False
 
+# is_valid_uci()
+# Determines whether a string represents a move in the context
+# of the board, specified in standard algebraic notation.
 def is_valid_san(string,board) :
     for move in board.legal_moves :
         if (string == board.san(move)) :
             return True
     return False
 
-def new_item(filepath) :    
+# new_tree()
+# Launches the dialogue to create a new tree.
+def new_tree(filepath) :    
     colour = select_colour(filepath)
     board = select_position(filepath, colour)
     tree.create(filepath, board, colour)
-    
-def new_item_title(filepath) :
+
+# new_tree_title
+# Prints details for the new tree dialogue.
+def new_tree_title(filepath) :
     clear()
     width = 22
     name = paths.item_name(filepath)
@@ -180,29 +218,35 @@ def new_item_title(filepath) :
     print("CATEGORY".ljust(width) + paths.category_name(filepath))
     print("COLLECTION".ljust(width) +paths.collection_name(filepath))
     print("")
-    
+
+# select_colour()
+# Returns the `tree colour' (i.e. the colour of the player who
+# trains with the tree) selected by the user.
 def select_colour(filepath) :
     command = ""
     while (command != "w" and command != "b") :
-        new_item_title(filepath)
+        new_tree_title(filepath)
         command = input("Select playing colour (w/b): ")
     if (command == "w") :
         return True
     else :
         return False
-    
-# prompts user to choose starting position
+
+# select_position()    
+# Prompts user to select the initial position of the tree.
 def select_position(filepath, colour) :
     board = chess.Board()
     command = "."
     while(command != "") :
-        new_item_title(filepath)
+        new_tree_title(filepath)
         print("Choose starting position.\n")
         print_board(board, colour)
         position_options(board)
         command = position_prompt(board)
     return board
 
+# position_options()
+# Prints options for the select_position() dialogue.
 def position_options(board) :
     print("<move> play move")
     print("<Enter> select position")
@@ -210,7 +254,9 @@ def position_options(board) :
         print("'b' backup")
     else :
         print("")
-        
+
+# position_prompt()
+# Handles the prompt for the select_position() dialogue.
 def position_prompt(board) :
     command = input("\n:")
     clear()
