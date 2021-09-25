@@ -24,7 +24,6 @@ along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
 # Typically only the functions clear() and print_board()
 # will be imported.
 
-# module imports
 from colorama import Fore, Back, Style # handles coloured printing
 
 # unicode values of chess pieces
@@ -34,7 +33,8 @@ black_pieces = ['\u265a','\u265b','\u265c',
                 '\u265d','\u265e','\u265f']
 
 # clear()
-# `clears' the terminal screen
+# `Clears' the terminal screen by inserting many line breaks.
+
 def clear() :
     height = 40
     for x in range(height) :

@@ -22,16 +22,24 @@ along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
 
 # SYNOPSIS
 # Provides functions for maniputaing file and directory paths for
-# user collections.
+# user collections. Filepaths can point to an asset at any level of
+# the asset heirarchy; these functions returning the path pointing
+# to higher level assets. 
 
+# item_name()
+# Returns the item name from a filepath.
 def item_name(filepath) :
     path = filepath.split('/')
     return path[3][:-4]
 
+# category_name()
+# Returns the category name from a filepath.
 def category_name(filepath) :
     path = filepath.split('/')
     return path[2]
 
+# collection_name()
+# Returns the collection name from a filepath.
 def collection_name(filepath) :
     path = filepath.split('/')
     return path[1]

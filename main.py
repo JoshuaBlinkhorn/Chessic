@@ -21,21 +21,32 @@ along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
 # MODULE main.py
 
 # SYNOPSIS
+# Provides the main user interface.
 
 import os
 import shutil
-
+import enum
 import stats
 import manager
 import paths
 from graphics import clear
 import trainer
 
-MAIN = 0
-COLLECTION = 1
-CATEGORY = 2
-ITEM = 3
+# Enumeration for the Chessic hierarchy;
+# In this hierarchy, training trees are called `items';
+# groups of items are called `categories';
+# groups of categories are called `collections'.
+# The only purpose of defining this enumeration is to avoid
+# repeating code -- for example, the collection and category menus
+# are essentially identical.
+class Asset(enum.Enum) :
+    MAIN = 0
+    COLLECTION = 1
+    CATEGORY = 2
+    ITEM = 3
 
+# represents_int()
+# Determines whether a string represents an integer.
 def represents_int(string):
     try: 
         int(string)
@@ -43,12 +54,114 @@ def represents_int(string):
     except ValueError:
         return False
 
+# options()
+# Prints options for the typical menu.
+def options(names) :
+    num_names = len(names)
+    print ("")
+    if (num_names != 0) :
+        print("[ID] select")
+    print("'n' new")
+    if (num_names != 0) :
+        print("'d' delete")
+    print("'b' back")
+
+# new()
+# Creates a new asset (i.e. collection, category etc.).
+def new(dirpath, asset) :    
+    name = input("Name: ")
+    while (True) :
+        new_path = dirpath + "/" + name
+        if (asset == Asset.ITEM) :
+            new_path += '.rpt'
+        if (not os.path.exists(new_path)) :
+            break
+        name = input("That name is taken.\nChoose another: ")        
+    
+    if (asset != Asset.ITEM) :
+        os.mkdir(new_path)
+    else :
+        manager.new_tree(new_path)
+
+# new()
+# Creates a new asset (i.e. collection, category etc.)..        
+def delete(dirpath, names, asset) :
+    command = input("ID to delete: ")
+    if (represents_int(command) and
+        1 <= int(command) <= len(names)) :
+        index = int(command) - 1
+        name = names[index]
+        print (f"You are about to permanently delete `{name}'.")
+        check = input("Are you sure? (y/n):")
+        if (check == "y") :
+            path = dirpath + "/" + name
+            if (asset == Asset.ITEM) :
+                os.remove(path)
+            else :
+                shutil.rmtree(path)
+
+# menu()
+# Prints the typical menu for the given asset.
+# The item menu is significantly different; this function launches
+# the menu for the other assets (`main', `collection', and
+# `category').
+def menu(dirpath, asset):
+    command = ""
+    while(command != "b") :
+        names = os.listdir(dirpath)
+        names.sort()        
+        title(dirpath, asset)
+        table(dirpath, names, asset)
+        options(names)
+        command = prompt(dirpath, names, asset)
+
+# title()
+# Prints the menu title.
+def title(dirpath, asset) :
+    clear()
+    if (asset == Asset.MAIN) :
+        print("YOUR COLLECTIONS")
+    elif (asset == Asset.COLLECTION) :
+        print("COLLECTION " + paths.collection_name(dirpath))
+    elif (asset == Asset.CATEGORY) :
+        print("CATEGORY   " + paths.category_name(dirpath))
+        print("COLLECTION " + paths.collection_name(dirpath))
+    print("")
+
+# table()
+# Prints the whole table for the typical menu.
+def table(dirpath, names, asset) :
+    if (len(names) == 0) :
+        if (asset == Asset.MAIN) :
+            print("You have no collections.")
+        elif (asset == Asset.COLLECTION) :
+            print("There are no categories in this collection.")
+        elif (asset == Asset.CATEGORY) :
+            print("There are no items in this collection.")
+        return
+
+    header_row()
+    for index, name in enumerate(names) :
+        path = dirpath + '/' + name
+        if (asset == Asset.MAIN) :
+            info = stats.collection_stats(path)
+        elif (asset == Asset.COLLECTION) :
+            info = stats.category_stats(path)
+        elif (asset == Asset.CATEGORY) :
+            info = stats.item_stats(path)
+            name = name[:-4]
+        info_row(info, name, index + 1)
+
+# header_row()
+# Prints the table header for the typical menu.
 def header_row() :
     string = "ID".ljust(3) + "COV.".ljust(5)
     string += "ITEM".ljust(20) + "WAITING".ljust(9) 
     string += "LEARNED".ljust(9) + "TOTAL".ljust(6)
     print(string)
 
+# info_row()
+# Prints an internal table row for the typical menu.
 def info_row(info, name, index) :
     waiting = info[stats.STAT_WAITING]
     learned = info[stats.STAT_LEARNED]        
@@ -64,89 +177,9 @@ def info_row(info, name, index) :
     info_string += str(learned).ljust(9) + str(size).ljust(7)
     print(info_string)
 
-def options(names) :
-    num_names = len(names)
-    print ("")
-    if (num_names != 0) :
-        print("[ID] select")
-    print("'n' new")
-    if (num_names != 0) :
-        print("'d' delete")
-    print("'b' back")
-
-def new(dirpath, asset) :    
-    name = input("Name: ")
-    while (True) :
-        new_path = dirpath + "/" + name
-        if (asset == ITEM) :
-            new_path += '.rpt'
-        if (not os.path.exists(new_path)) :
-            break
-        name = input("That name is taken.\nChoose another: ")        
-    
-    if (asset != ITEM) :
-        os.mkdir(new_path)
-    else :
-        manager.new_item(new_path)
-        
-def delete(dirpath, names, asset) :
-    command = input("ID to delete: ")
-    if (represents_int(command) and
-        1 <= int(command) <= len(names)) :
-        index = int(command) - 1
-        name = names[index]
-        print (f"You are about to permanently delete `{name}'.")
-        check = input("Are you sure? (y/n):")
-        if (check == "y") :
-            path = dirpath + "/" + name
-            if (asset == ITEM) :
-                os.remove(path)
-            else :
-                shutil.rmtree(path)
-
-def menu(dirpath, asset):
-    command = ""
-    while(command != "b") :
-        names = os.listdir(dirpath)
-        names.sort()        
-        title(dirpath, asset)
-        table(dirpath, names, asset)
-        options(names)
-        command = prompt(dirpath, names, asset)
-
-def title(dirpath, asset) :
-    clear()
-    if (asset == MAIN) :
-        print("YOUR COLLECTIONS")
-    elif (asset == COLLECTION) :
-        print("COLLECTION " + paths.collection_name(dirpath))
-    elif (asset == CATEGORY) :
-        print("CATEGORY   " + paths.category_name(dirpath))
-        print("COLLECTION " + paths.collection_name(dirpath))
-    print("")
-
-def table(dirpath, names, asset) :
-    if (len(names) == 0) :
-        if (asset == MAIN) :
-            print("You have no collections.")
-        elif (asset == COLLECTION) :
-            print("There are no categories in this collection.")
-        elif (asset == CATEGORY) :
-            print("There are no items in this collection.")
-        return
-
-    header_row()
-    for index, name in enumerate(names) :
-        path = dirpath + '/' + name
-        if (asset == MAIN) :
-            info = stats.collection_stats(path)
-        elif (asset == COLLECTION) :
-            info = stats.category_stats(path)
-        elif (asset == CATEGORY) :
-            info = stats.item_stats(path)
-            name = name[:-4]
-        info_row(info, name, index + 1)
-
+# prompt()
+# Handles the typical menu prompt.
+# Returns the user's command.
 def prompt(dirpath, names, asset) :
     new_asset = next_asset(asset)
     command = (input("\n:"))
@@ -154,9 +187,9 @@ def prompt(dirpath, names, asset) :
         1 <= int(command) <= len(names)) :
         index = int(command) - 1
         name_path = dirpath + '/' + names[index]
-        if (asset == MAIN or asset == COLLECTION) :
+        if (asset == Asset.MAIN or asset == Asset.COLLECTION) :
             menu(name_path, new_asset)
-        elif (asset == CATEGORY) :
+        elif (asset == Asset.CATEGORY) :
             item_menu(name_path)                
     elif (command == "n") :
         new(dirpath, new_asset)
@@ -164,14 +197,18 @@ def prompt(dirpath, names, asset) :
         delete(dirpath, names, new_asset)
     return command
 
+# next_asset()
+# Returns the next asset down in the hierarchy
 def next_asset(asset) :
-    if (asset == MAIN) :
-        return COLLECTION
-    elif (asset == COLLECTION) :
-        return CATEGORY
-    elif (asset == CATEGORY) :
-        return ITEM
+    if (asset == Asset.MAIN) :
+        return Asset.COLLECTION
+    elif (asset == Asset.COLLECTION) :
+        return Asset.CATEGORY
+    elif (asset == Asset.CATEGORY) :
+        return Asset.ITEM
 
+# item_menu()
+# Launches the menu for the item asset.
 def item_menu(filepath) :
     command = ""
     while(command != "b") :
@@ -186,6 +223,8 @@ def item_menu(filepath) :
         elif (command == "t") :
             trainer.train(filepath)
 
+# item_header()
+# Prints the header for the item menu.
 def item_header(filepath, info) :
     width = 14
     waiting = info[stats.STAT_NEW] + info[stats.STAT_FIRST_STEP]
@@ -199,7 +238,8 @@ def item_header(filepath, info) :
     print("COLLECTION".ljust(width) +paths.collection_name(filepath))
     print("STATUS".ljust(width) + status_msg)
 
-
+# item_overview()
+# Prints information for the tree.
 def item_overview(info) :
     width = 14
     learning = info[stats.STAT_FIRST_STEP]
@@ -214,6 +254,8 @@ def item_overview(info) :
     print("Reachable".ljust(width) + str(info[stats.STAT_REACHABLE]))
     print("Total".ljust(width) + str(info[stats.STAT_TOTAL]))
 
+# item_options()
+# Prints the options for the item menu.
 def item_options(info) :
     waiting = info[stats.STAT_NEW] + info[stats.STAT_FIRST_STEP]
     waiting += info[stats.STAT_SECOND_STEP] + info[stats.STAT_DUE]
@@ -223,8 +265,7 @@ def item_options(info) :
     print("'m' manage")
     print("'b' back")
     
-
-# repertoires_path = "Repertoires"
+# entry point
 repertoires_path = "Collections"
-menu(repertoires_path, MAIN)
+menu(repertoires_path, Asset.MAIN)
 

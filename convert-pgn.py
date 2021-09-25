@@ -29,6 +29,9 @@ import chess
 import chess.pgn
 import tree
 
+# process()
+# Adds default training data to a solution; sets node.training
+# to None for all non-solution nodes when called on the root.
 def process(node) :
     if (tree.is_raw_solution(node)) :
         node.training = tree.TrainingData()
@@ -38,18 +41,26 @@ def process(node) :
         for child in node.variations :
             process(child)
 
-if (len(sys.argv) != 4 or
-    (sys.argv[3] != "w" and sys.argv[3] != "b")) :
-    help_string = "usage: python3 convert-pgn.py"
-    help_string += " <source-dir> <destination-dir> <w|b>"
-    print(help_string)
-    quit()
+# check_usage()
+# Checks that the command line paramaters make sense
+def check_usage(args) :
+    if (len(args) != 4 or
+        (agrs[3] != "w" and args[3] != "b")) :
+        help_string = "usage: python3 convert-pgn.py"
+        help_string += " <source-dir> <destination-dir> <w|b>"
+        print(help_string)
+        quit()
 
+# entry point
+check_args(sys.argv)
+
+# setup
 source_dir = sys.argv[1]
 PGNs = os.listdir(source_dir)
 destination_dir = sys.argv[2]
 colour = (sys.argv[3] == "w")
 
+# cycle through PGNs and convert each
 for PGN in PGNs :
     PGN_path = source_dir + '/' + PGN
     RPT_path = destination_dir + '/' + PGN[:-4] + ".rpt"
@@ -57,6 +68,6 @@ for PGN in PGNs :
     root = chess.pgn.read_game(pgn)
     root.meta = tree.MetaData(colour)
     root.training = None
-    process(root)
+    process(root) # processes the whole tree
     tree.update_statuses(root)
     tree.save(RPT_path, root)
