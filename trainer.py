@@ -238,7 +238,9 @@ def new_due_date(node, result, today) :
     else :
         multiplier = 4
     gap = (node.training.due - node.training.previous_due).days
-    wait = int(gap * (multiplier + random.random()))
+    min_recall_wait = 365
+    wait = min(min_recall_wait,
+               int(gap * (multiplier + random.random())))
     return today + datetime.timedelta(days = wait)    
     
 def requeue(node, queue, new_status) :
