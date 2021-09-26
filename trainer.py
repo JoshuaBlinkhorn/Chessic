@@ -251,7 +251,7 @@ def handle_result(result, solution, queue) :
         if (result == Result.EASY) :
             schedule(solution, result)
             root.meta.new_remaining -= 1
-        elif (result == Result.OKAY or result == RESULT.HARD) :
+        elif (result == Result.OKAY or result == Result.HARD) :
             requeue(solution, queue, tree.Status.SECOND_STEP)
         elif (result == Result.HARD) :
             requeue(solution, queue, tree.Status.FIRST_STEP)            
@@ -281,9 +281,7 @@ def schedule(solution, result) :
     today = datetime.date.today()
     if (solution.training.status == tree.Status.FIRST_STEP or
         solution.training.status == tree.Status.SECOND_STEP) :
-        solution.training.due = first_due_date(solution,
-                                               result,
-                                               today)
+        solution.training.due = first_due_date(result, today)
     else :
         solution.training.due = new_due_date(solution, result, today)
     solution.training.previous_due = today

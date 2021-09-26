@@ -26,9 +26,11 @@ along with Chessic.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import shutil
 import enum
+
 import stats
 import manager
 import paths
+import tree
 from graphics import clear
 import trainer
 
@@ -265,7 +267,28 @@ def item_options(info) :
     print("'m' manage")
     print("'b' back")
     
-# entry point
-repertoires_path = "Collections"
-menu(repertoires_path, Asset.MAIN)
+# initialise_sample_collection()
+# Creates the `Collections' folder and initialises it to replicate
+# the `Collections-sample' folder.
+def initialise_sample_collection(col_path) :    
+    os.mkdir(col_path)
+    os.mkdir(col_path + "/Sample-Collection")
+    os.mkdir(col_path + "/Sample-Collection/Sample-Category")
+    sample_item_target = "Sample-Collections/Sample-Collection/Sample-Category/English.rpt"
+    sample_item_destination = "Collections/Sample-Collection/Sample-Category/English.rpt"     
+    root = tree.load(sample_item_target)
+    tree.save(sample_item_destination, root)
+
+###############    
+# entry point #
+###############
+
+col_path = "Collections"
+
+# initialise sample item if necessary
+if(not os.path.isdir(col_path)) :
+    initialise_sample_collection(col_path)
+
+# launch main menu
+menu(col_path, Asset.MAIN)
 
