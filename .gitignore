@@ -1,6 +1,10 @@
 __pycache__
 Collections
 Archive
+*.png
+*.log
+*.aux
+*.tex
 #*
 \#*
 .#*
